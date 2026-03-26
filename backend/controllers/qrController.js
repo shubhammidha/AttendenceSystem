@@ -5,6 +5,8 @@ let activeQR = {}; // temp storage
 //generat Qr
 exports.generateQR = async (req, res) => {
     try{
+        console.log(req.body);
+        
         const {classId} = req.body;
 
         const qrData = {
@@ -17,7 +19,7 @@ exports.generateQR = async (req, res) => {
         const qrImage = await QRCode.toDataURL(qrString);
 
         //store QR temporarily
-        active[classId] = qrData;
+        activeQR[classId] = qrData;
 
         //expire in 2 min
         setTimeout(() => {
@@ -25,9 +27,10 @@ exports.generateQR = async (req, res) => {
         }, 2 * 60 * 1000);
 
         res.json({qrImage});
-    }catch(error){
-        res.status(500).json(error);
-    }
+    }catch (error) {
+        console.log(error); // 👈 ADD THIS
+        res.status(500).json(error.message);
+}
 };
 
 
