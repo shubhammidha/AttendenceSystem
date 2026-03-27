@@ -36,7 +36,7 @@ exports.generateQR = async (req, res) => {
 
 
 
-const Attendence = require("../models/Attendence");
+const Attendance = require("../models/Attendance");
 
 exports.scanQR = async (req, res) => {
     try{
