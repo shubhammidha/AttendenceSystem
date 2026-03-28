@@ -1,5 +1,6 @@
 const QRCode = require("qrcode");
 
+
 let activeQR = {}; // temp storage
 
 //generat Qr
@@ -28,15 +29,12 @@ exports.generateQR = async (req, res) => {
 
         res.json({qrImage});
     }catch (error) {
-        console.log(error); // 👈 ADD THIS
+        console.log(error);
         res.status(500).json(error.message);
 }
 };
 
 
-
-
-const Attendance = require("../models/Attendance");
 
 exports.scanQR = async (req, res) => {
     try{
@@ -68,3 +66,43 @@ exports.scanQR = async (req, res) => {
         res.status(500).json(error);
     }
 };
+
+
+exports.scanQR = async (req, res) => {
+    try{
+        const { classId, studentId } = req.body;
+
+        //check if qr is active
+        if (!activeQR[classId]){
+            return res.status(400).json({message: "QR expired or invalid"})
+        }
+
+        //check if attendence is already marked
+        const alreadyMarked = await Attendance.findOne({
+            student: studentId,
+            class: classId,
+            date: {
+                $gte: Date.now().setHours(0, 0, 0, 0)
+            }
+        });
+
+        if(alreadyMarked){
+            return res.status(400).json({message: "Attendance already marked"});
+        }
+
+        const attendance = new Attendance({
+            student: studentId,
+            class: classId,
+            status: "present",
+            method: "qr"
+        });
+
+        await attendance.save();
+
+        res.json({message: "Attendace marked via QR"});
+
+    } catch (error){
+        console.log(error);
+        res.status(500).json(error.message);
+    }
+}

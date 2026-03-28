@@ -34,6 +34,7 @@ exports.getAttendance = async (req, res) => {
 };
 
 
+//GET NUMBER OF PRESENT/ABSENT
 exports.getStats = async (req, res) => {
     try{
         const { studentId } = req.params;
