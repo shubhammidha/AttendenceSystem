@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { PieChart, Pie, Tooltip, Legend, Cell } from "recharts";
+import QRGenerator from "./QRGenerator";
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -31,68 +32,74 @@ const Dashboard = () => {
   ];
 
   return (
+  <div
+    style={{
+      minHeight: "100vh",
+      background: "#0f172a",
+      color: "white",
+      padding: "30px"
+    }}
+  >
+    <h1 style={{ textAlign: "center", fontSize: "50px" }}>
+      Attendance Dashboard
+    </h1>
+
+    {/* Stats Cards */}
     <div
       style={{
-        minHeight: "100vh",
-        background: "#0f172a",
-        color: "white",
-        padding: "30px"
+        display: "flex",
+        justifyContent: "center",
+        gap: "20px",
+        marginTop: "30px",
+        flexWrap: "wrap"
       }}
     >
-      <h1 style={{ textAlign: "center", fontSize: "50px" }}>
-        Attendance Dashboard
-      </h1>
-
-      {/* Stats Cards */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          gap: "20px",
-          marginTop: "30px",
-          flexWrap: "wrap"
-        }}
-      >
-        <div style={cardStyle}>
-          <h2>Total Classes</h2>
-          <p>{stats.totalClasses}</p>
-        </div>
-
-        <div style={cardStyle}>
-          <h2>Present</h2>
-          <p>{stats.present}</p>
-        </div>
-
-        <div style={cardStyle}>
-          <h2>Absent</h2>
-          <p>{stats.absent}</p>
-        </div>
-
-        <div style={cardStyle}>
-          <h2>Attendance %</h2>
-          <p>{stats.percentage}%</p>
-        </div>
+      <div style={cardStyle}>
+        <h2>Total Classes</h2>
+        <p>{stats.totalClasses}</p>
       </div>
 
-      {/* Pie Chart */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          marginTop: "50px"
-        }}
-      >
-        <PieChart width={450} height={400}>
-          <Pie data={data} dataKey="value" outerRadius={130} label>
-            <Cell fill="#22c55e" />
-            <Cell fill="#ef4444" />
-          </Pie>
-          <Tooltip />
-          <Legend />
-        </PieChart>
+      <div style={cardStyle}>
+        <h2>Present</h2>
+        <p>{stats.present}</p>
+      </div>
+
+      <div style={cardStyle}>
+        <h2>Absent</h2>
+        <p>{stats.absent}</p>
+      </div>
+
+      <div style={cardStyle}>
+        <h2>Attendance %</h2>
+        <p>{stats.percentage}%</p>
       </div>
     </div>
-  );
+
+    {/* Pie Chart */}
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        marginTop: "50px"
+      }}
+    >
+      <PieChart width={450} height={400}>
+        <Pie data={data} dataKey="value" outerRadius={130} label>
+          <Cell fill="#22c55e" />
+          <Cell fill="#ef4444" />
+        </Pie>
+        <Tooltip />
+        <Legend />
+      </PieChart>
+    </div>
+
+    {/* ✅ QR SECTION (ADD HERE) */}
+    <div style={{ marginTop: "60px", textAlign: "center" }}>
+      <h2>QR Attendance</h2>
+      <QRGenerator />
+    </div>
+  </div>
+);
 };
 
 const cardStyle = {
@@ -103,5 +110,18 @@ const cardStyle = {
   textAlign: "center",
   boxShadow: "0 4px 10px rgba(0,0,0,0.3)"
 };
+<div>
+    {/* EXISTING DASHBOARD UI */}
+    
+    <h1>Attendance Dashboard</h1>
+    
+    {/* cards, chart etc */}
+
+    {/* 👇 ADD THIS SECTION AT BOTTOM */}
+    <div style={{ marginTop: "40px" }}>
+      <h2>QR Attendance</h2>
+      <QRGenerator />
+    </div>
+  </div>
 
 export default Dashboard;
