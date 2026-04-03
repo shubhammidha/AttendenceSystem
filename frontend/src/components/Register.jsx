@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-const Register = ({ setIsRegistered }) => {
+const Register = ({ setShowLogin }) => {
     const [form, setForm] = useState({
         name: "",
         email: "",
@@ -24,7 +24,7 @@ const Register = ({ setIsRegistered }) => {
             );
 
             alert("✅ Registration successful! Please login.");
-            setIsRegistered(true); // Switch to login
+            setShowLogin(true); // Switch to login page
             
         } catch (error) {
             console.log(error);
@@ -100,7 +100,7 @@ const Register = ({ setIsRegistered }) => {
             }}>
               Already have an account? 
               <span 
-                onClick={() => setIsRegistered(true)}
+                onClick={() => setShowLogin(true)}
                 style={{ color: "#22c55e", cursor: "pointer" }}
               >
                 {" "}Login here

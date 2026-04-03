@@ -26,6 +26,8 @@ const Dashboard = () => {
   const fetchUserRole = async () => {
     try {
       const savedRole = localStorage.getItem("userRole");
+      const savedName = localStorage.getItem("userName");
+      
       if (savedRole) {
         setUserRole(savedRole);
         console.log("Using saved role:", savedRole);
@@ -33,10 +35,22 @@ const Dashboard = () => {
         console.log("No role found, defaulting to student");
         setUserRole("student");
       }
+      
+      if (savedName) {
+        setUserName(savedName);
+      }
     } catch (error) {
       console.log("Error fetching user role:", error);
       setUserRole("student"); // Default to student
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("userName");
+    window.location.reload(); // Reload to show login page
   };
 
   const fetchStats = async () => {
@@ -71,9 +85,36 @@ const Dashboard = () => {
         padding: "30px"
       }}
     >
-      <h1 style={{ textAlign: "center", fontSize: "50px" }}>
-        {userRole === "teacher" ? "Teacher Dashboard" : "Student Dashboard"}
-      </h1>
+      {/* User Info Header */}
+      <div style={{ 
+        display: "flex", 
+        justifyContent: "space-between", 
+        alignItems: "center",
+        marginBottom: "30px"
+      }}>
+        <h1 style={{ textAlign: "left", fontSize: "40px", margin: 0 }}>
+          {userRole === "teacher" ? "Teacher Dashboard" : "Student Dashboard"}
+        </h1>
+        <div style={{ textAlign: "right" }}>
+          <p style={{ margin: "0", fontSize: "16px" }}>
+            👤 {userName || "User"} ({userRole})
+          </p>
+          <button 
+            onClick={handleLogout}
+            style={{
+              padding: "8px 16px",
+              backgroundColor: "#ef4444",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+              fontSize: "14px"
+            }}
+          >
+            🚪 Logout
+          </button>
+        </div>
+      </div>
 
       {/* Teacher-specific features */}
       {userRole === "teacher" && (

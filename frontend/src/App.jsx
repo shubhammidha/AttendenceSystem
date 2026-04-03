@@ -7,14 +7,14 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(
     !!localStorage.getItem("token")
   );
-  const [isRegistered, setIsRegistered] = useState(true); // Show login by default
+  const [showLogin, setShowLogin] = useState(false); // false = show register, true = show login
 
   return isLoggedIn ? (
     <Dashboard />
-  ) : isRegistered ? (
-    <Login setIsLoggedIn={setIsLoggedIn} />
+  ) : showLogin ? (
+    <Login setIsLoggedIn={setIsLoggedIn} setShowLogin={setShowLogin} />
   ) : (
-    <Register setIsRegistered={setIsRegistered} />
+    <Register setShowLogin={setShowLogin} />
   );
 }
 
