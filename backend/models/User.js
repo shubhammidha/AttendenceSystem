@@ -7,8 +7,8 @@ const userSchema = new mongoose.Schema({
   },
   email: {
     type: String,
-    unique: true,
-    required: true
+    required: true,
+    unique: true
   },
   password: {
     type: String,
@@ -20,7 +20,8 @@ const userSchema = new mongoose.Schema({
     default: "student"
   },
   faceData: {
-    type: String // for future face recognition
+    type: mongoose.Schema.Types.Mixed,
+    default: null
   }
 }, { timestamps: true });
 

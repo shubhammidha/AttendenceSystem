@@ -29,8 +29,10 @@ const Login = ({ setIsLoggedIn }) => {
 
             if (res.data.user && res.data.user._id) {
               localStorage.setItem("userId", res.data.user._id);
+              localStorage.setItem("userRole", res.data.user.role || "student"); 
               console.log("Saved userId:", res.data.user._id);
-              setIsLoggedIn(true); // Set login state
+              console.log("Saved userRole:", res.data.user.role);
+              setIsLoggedIn(true); 
             } else {
               console.log("User ID missing in response");
               alert("Login failed: Invalid user data");

@@ -14,9 +14,30 @@ const Dashboard = () => {
     percentage: 0
   });
 
+  const [userRole, setUserRole] = useState("student");
+  const [userName, setUserName] = useState("");
+  const userId = localStorage.getItem("userId");
+
   useEffect(() => {
     fetchStats();
+    fetchUserRole();
   }, []);
+
+  const fetchUserRole = async () => {
+    try {
+      const savedRole = localStorage.getItem("userRole");
+      if (savedRole) {
+        setUserRole(savedRole);
+        console.log("Using saved role:", savedRole);
+      } else {
+        console.log("No role found, defaulting to student");
+        setUserRole("student");
+      }
+    } catch (error) {
+      console.log("Error fetching user role:", error);
+      setUserRole("student"); // Default to student
+    }
+  };
 
   const fetchStats = async () => {
     try {
@@ -42,87 +63,120 @@ const Dashboard = () => {
   ];
 
   return (
-  <div
-    style={{
-      minHeight: "100vh",
-      background: "#0f172a",
-      color: "white",
-      padding: "30px"
-    }}
-  >
-    <h1 style={{ textAlign: "center", fontSize: "50px" }}>
-      Attendance Dashboard
-    </h1>
-
-    {/* Stats Cards */}
     <div
       style={{
-        display: "flex",
-        justifyContent: "center",
-        gap: "20px",
-        marginTop: "30px",
-        flexWrap: "wrap"
+        minHeight: "100vh",
+        background: "#0f172a",
+        color: "white",
+        padding: "30px"
       }}
     >
-      <div style={cardStyle}>
-        <h2>Total Classes</h2>
-        <p>{stats.totalClasses}</p>
+      <h1 style={{ textAlign: "center", fontSize: "50px" }}>
+        {userRole === "teacher" ? "Teacher Dashboard" : "Student Dashboard"}
+      </h1>
+
+      {/* Teacher-specific features */}
+      {userRole === "teacher" && (
+        <div style={{ 
+          textAlign: "center", 
+          marginBottom: "30px", 
+          padding: "20px", 
+          backgroundColor: "#1e293b", 
+          borderRadius: "8px" 
+        }}>
+          <h3>🎓 Teacher Controls</h3>
+          <p style={{ marginBottom: "10px" }}>Start a new lecture for students to mark attendance</p>
+          <button 
+            style={{
+              padding: "12px 24px",
+              backgroundColor: "#22c55e",
+              color: "white",
+              border: "none",
+              borderRadius: "6px",
+              fontSize: "16px",
+              cursor: "pointer"
+            }}
+          >
+            🚀 Start Lecture
+          </button>
+        </div>
+      )}
+
+      {/* Stats Cards */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          gap: "20px",
+          marginTop: "30px",
+          flexWrap: "wrap"
+        }}
+      >
+        <div style={cardStyle}>
+          <h2>Total Classes</h2>
+          <p>{stats.totalClasses}</p>
+        </div>
+
+        <div style={cardStyle}>
+          <h2>Present</h2>
+          <p>{stats.present}</p>
+        </div>
+
+        <div style={cardStyle}>
+          <h2>Absent</h2>
+          <p>{stats.absent}</p>
+        </div>
+
+        <div style={cardStyle}>
+          <h2>Attendance %</h2>
+          <p>{stats.percentage}%</p>
+        </div>
       </div>
 
-      <div style={cardStyle}>
-        <h2>Present</h2>
-        <p>{stats.present}</p>
+      {/* Pie Chart */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          marginTop: "50px"
+        }}
+      >
+        <PieChart width={450} height={400}>
+          <Pie data={data} dataKey="value" outerRadius={130} label>
+            <Cell fill="#22c55e" />
+            <Cell fill="#ef4444" />
+          </Pie>
+          <Tooltip />
+          <Legend />
+        </PieChart>
       </div>
 
-      <div style={cardStyle}>
-        <h2>Absent</h2>
-        <p>{stats.absent}</p>
-      </div>
+      {/* Student-only features */}
+      {userRole === "student" && (
+        <>
+          {/* QR SECTION */}
+          <div style={{ marginTop: "60px", textAlign: "center" }}>
+            <h2>QR Attendance</h2>
+            <QRGenerator />
+          </div>
+          <div style={{ marginTop: "40px", textAlign: "center" }}>
+            <QRScanner />
+          </div>
 
-      <div style={cardStyle}>
-        <h2>Attendance %</h2>
-        <p>{stats.percentage}%</p>
-      </div>
-    </div>
+          {/* FACE RECOGNITION SECTION */}
+          <div style={{ marginTop: "60px", textAlign: "center" }}>
+            <h2>Face Recognition</h2>
+            <FaceRegister />
+          </div>
+          <div style={{ marginTop: "40px", textAlign: "center" }}>
+            <FaceAttendance />
+          </div>
+        </>
+      )}
 
-    {/* Pie Chart */}
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        marginTop: "50px"
-      }}
-    >
-      <PieChart width={450} height={400}>
-        <Pie data={data} dataKey="value" outerRadius={130} label>
-          <Cell fill="#22c55e" />
-          <Cell fill="#ef4444" />
-        </Pie>
-        <Tooltip />
-        <Legend />
-      </PieChart>
+      {/* Teacher-only features would go here */}
     </div>
-
-    {/* QR SECTION */}
-    <div style={{ marginTop: "60px", textAlign: "center" }}>
-      <h2>QR Attendance</h2>
-      <QRGenerator />
-    </div>
-    <div style={{ marginTop: "40px", textAlign: "center" }}>
-      <QRScanner />
-    </div>
-
-    {/* FACE RECOGNITION SECTION */}
-    <div style={{ marginTop: "60px", textAlign: "center" }}>
-      <h2>Face Recognition</h2>
-      <FaceRegister />
-    </div>
-    <div style={{ marginTop: "40px", textAlign: "center" }}>
-      <FaceAttendance />
-    </div>
-  </div>
-  
-);
+  );
 };
 
 const cardStyle = {
