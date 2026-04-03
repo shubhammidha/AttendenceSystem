@@ -4,6 +4,7 @@ import { PieChart, Pie, Tooltip, Legend, Cell } from "recharts";
 import QRGenerator from "./QRGenerator";
 import QRScanner from "./QRScanner";
 import FaceRegister from "./FaceRegister";
+import FaceAttendance from "./FaceAttendance";
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -115,6 +116,9 @@ const Dashboard = () => {
     <div style={{ marginTop: "60px", textAlign: "center" }}>
       <h2>Face Recognition</h2>
       <FaceRegister />
+    </div>
+    <div style={{ marginTop: "40px", textAlign: "center" }}>
+      <FaceAttendance />
     </div>
   </div>
   
