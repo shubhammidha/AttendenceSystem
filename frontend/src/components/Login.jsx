@@ -1,7 +1,7 @@
 import React, {useState} from "react";
 import axios from "axios";
 
-const Login = ({ setIsLoggedIn, setShowLogin }) => {
+const Login = ({ setIsLoggedIn, setIsRegistered }) => {
     const [form, setForm] = useState({
         email: "",
         password: ""
@@ -24,16 +24,15 @@ const Login = ({ setIsLoggedIn, setShowLogin }) => {
             console.log("FULL RESPONSE:", res.data);
             console.log("USER:", res.data.user);
             console.log("USER ID:", res.data.user?._id);
+            console.log("USER ROLE:", res.data.user?.role);
 
             localStorage.setItem("token", res.data.token);
 
             if (res.data.user && res.data.user._id) {
               localStorage.setItem("userId", res.data.user._id);
-              localStorage.setItem("userRole", res.data.user.role || "student");
-              localStorage.setItem("userName", res.data.user.name || "User");
+              localStorage.setItem("userRole", res.data.user.role || "student"); 
               console.log("Saved userId:", res.data.user._id);
               console.log("Saved userRole:", res.data.user.role);
-              console.log("Saved userName:", res.data.user.name);
               setIsLoggedIn(true); 
             } else {
               console.log("User ID missing in response");
@@ -85,19 +84,16 @@ const Login = ({ setIsLoggedIn, setShowLogin }) => {
           Login
         </button>
 
-        <p style={{
-          color: "#ccc", 
-          textAlign: "center", 
-          marginTop: "20px",
-          fontSize: "14px"
-        }}>
-          Don't have an account? 
-          <span 
-            onClick={() => setShowLogin(false)}
-            style={{ color: "#22c55e", cursor: "pointer" }}
-          >
-            {" "}Register here
-          </span>
+        <p 
+          style={{ 
+            color: "#94a3b8", 
+            textAlign: "center", 
+            marginTop: "20px", 
+            cursor: "pointer" 
+          }}
+          onClick={() => setIsRegistered(false)}
+        >
+          Don't have an account? Register
         </p>
       </div>
     </div>

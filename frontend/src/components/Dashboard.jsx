@@ -14,44 +14,21 @@ const Dashboard = () => {
     percentage: 0
   });
 
-  const [userRole, setUserRole] = useState("student");
-  const [userName, setUserName] = useState("");
+  const [userRole, setUserRole] = useState("student"); // Get user role
+  const [userName, setUserName] = useState(""); // Get user name
   const userId = localStorage.getItem("userId");
 
   useEffect(() => {
     fetchStats();
-    fetchUserRole();
-  }, []);
-
-  const fetchUserRole = async () => {
-    try {
-      const savedRole = localStorage.getItem("userRole");
-      const savedName = localStorage.getItem("userName");
-      
-      if (savedRole) {
-        setUserRole(savedRole);
-        console.log("Using saved role:", savedRole);
-      } else {
-        console.log("No role found, defaulting to student");
-        setUserRole("student");
-      }
-      
-      if (savedName) {
-        setUserName(savedName);
-      }
-    } catch (error) {
-      console.log("Error fetching user role:", error);
-      setUserRole("student"); // Default to student
+    // Get role from localStorage (saved during login)
+    const savedRole = localStorage.getItem("userRole");
+    if (savedRole) {
+      setUserRole(savedRole);
+      console.log("User role from localStorage:", savedRole);
+    } else {
+      console.log("No role found, defaulting to student");
     }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("userId");
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("userName");
-    window.location.reload(); // Reload to show login page
-  };
+  }, []);
 
   const fetchStats = async () => {
     try {
@@ -76,6 +53,13 @@ const Dashboard = () => {
     { name: "Absent", value: stats.absent }
   ];
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("userRole");
+    window.location.reload(); // Force reload to clear state
+  };
+
   return (
     <div
       style={{
@@ -85,35 +69,38 @@ const Dashboard = () => {
         padding: "30px"
       }}
     >
-      {/* User Info Header */}
+      {/* Header with Logout */}
       <div style={{ 
         display: "flex", 
         justifyContent: "space-between", 
         alignItems: "center",
-        marginBottom: "30px"
+        marginBottom: "20px"
       }}>
-        <h1 style={{ textAlign: "left", fontSize: "40px", margin: 0 }}>
-          {userRole === "teacher" ? "Teacher Dashboard" : "Student Dashboard"}
-        </h1>
-        <div style={{ textAlign: "right" }}>
-          <p style={{ margin: "0", fontSize: "16px" }}>
-            👤 {userName || "User"} ({userRole})
+        <div>
+          <h1 style={{ textAlign: "left", fontSize: "40px", margin: 0 }}>
+            {userRole === "teacher" ? "Teacher Dashboard" : "Student Dashboard"}
+          </h1>
+          <p style={{ color: "#94a3b8", margin: "5px 0 0 0" }}>
+            {userRole === "teacher" ? "👨‍🏫" : "👨‍🎓"} {userRole.charAt(0).toUpperCase() + userRole.slice(1)} Portal
           </p>
-          <button 
-            onClick={handleLogout}
-            style={{
-              padding: "8px 16px",
-              backgroundColor: "#ef4444",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontSize: "14px"
-            }}
-          >
-            🚪 Logout
-          </button>
         </div>
+        <button
+          onClick={handleLogout}
+          style={{
+            padding: "10px 20px",
+            backgroundColor: "#ef4444",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            fontSize: "14px",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px"
+          }}
+        >
+          🚪 Logout
+        </button>
       </div>
 
       {/* Teacher-specific features */}

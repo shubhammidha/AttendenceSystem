@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-const Register = ({ setShowLogin }) => {
+const Register = ({ setIsRegistered }) => {
     const [form, setForm] = useState({
         name: "",
         email: "",
@@ -23,12 +23,10 @@ const Register = ({ setShowLogin }) => {
                 form
             );
 
-            alert("✅ Registration successful! Please login.");
-            setShowLogin(true); // Switch to login page
-            
+            alert("Registration successful! Please login.");
+            setIsRegistered(true);
         } catch (error) {
-            console.log(error);
-            alert("❌ Registration failed: " + (error.response?.data?.message || error.message));
+            alert("Registration failed: " + (error.response?.data?.message || error.message));
         }
     };
 
@@ -50,14 +48,14 @@ const Register = ({ setShowLogin }) => {
               width: "350px"
             }}
           >
-            <h1 style={{ color: "white", textAlign: "center", marginBottom: "30px" }}>
+            <h1 style={{ color: "white", textAlign: "center", marginBottom: "20px" }}>
               Create Account
             </h1>
 
             <input
               type="text"
               name="name"
-              placeholder="Enter your name"
+              placeholder="Enter name"
               onChange={handleChange}
               style={inputStyle}
             />
@@ -82,7 +80,15 @@ const Register = ({ setShowLogin }) => {
               name="role"
               onChange={handleChange}
               value={form.role}
-              style={inputStyle}
+              style={{
+                width: "100%",
+                padding: "12px",
+                marginTop: "20px",
+                borderRadius: "8px",
+                border: "none",
+                background: "#334155",
+                color: "white"
+              }}
             >
               <option value="student">Student</option>
               <option value="teacher">Teacher</option>
@@ -92,19 +98,16 @@ const Register = ({ setShowLogin }) => {
               Register
             </button>
 
-            <p style={{ 
-              color: "#ccc", 
-              textAlign: "center", 
-              marginTop: "20px",
-              fontSize: "14px"
-            }}>
-              Already have an account? 
-              <span 
-                onClick={() => setShowLogin(true)}
-                style={{ color: "#22c55e", cursor: "pointer" }}
-              >
-                {" "}Login here
-              </span>
+            <p 
+              style={{ 
+                color: "#94a3b8", 
+                textAlign: "center", 
+                marginTop: "20px", 
+                cursor: "pointer" 
+              }}
+              onClick={() => setIsRegistered(true)}
+            >
+              Already have an account? Login
             </p>
           </div>
         </div>
@@ -116,9 +119,7 @@ const inputStyle = {
   padding: "12px",
   marginTop: "20px",
   borderRadius: "8px",
-  border: "none",
-  backgroundColor: "#374151",
-  color: "white"
+  border: "none"
 };
 
 const buttonStyle = {
