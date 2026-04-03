@@ -3,6 +3,7 @@ import axios from "axios";
 import { PieChart, Pie, Tooltip, Legend, Cell } from "recharts";
 import QRGenerator from "./QRGenerator";
 import QRScanner from "./QRScanner";
+import FaceRegister from "./FaceRegister";
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -101,13 +102,19 @@ const Dashboard = () => {
       </PieChart>
     </div>
 
-    {/* ✅ QR SECTION (ADD HERE) */}
+    {/* QR SECTION */}
     <div style={{ marginTop: "60px", textAlign: "center" }}>
       <h2>QR Attendance</h2>
       <QRGenerator />
     </div>
     <div style={{ marginTop: "40px", textAlign: "center" }}>
       <QRScanner />
+    </div>
+
+    {/* FACE RECOGNITION SECTION */}
+    <div style={{ marginTop: "60px", textAlign: "center" }}>
+      <h2>Face Recognition</h2>
+      <FaceRegister />
     </div>
   </div>
   
