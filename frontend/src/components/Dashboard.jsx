@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { PieChart, Pie, Tooltip, Legend, Cell } from "recharts";
 import QRGenerator from "./QRGenerator";
+import QRScanner from "./QRScanner";
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -17,8 +18,15 @@ const Dashboard = () => {
 
   const fetchStats = async () => {
     try {
+      const userId = localStorage.getItem("userId");
+
+      if(!userId){
+        console.log("No userId found in localStorage");
+        return;
+      }
+
       const res = await axios.get(
-        `http://localhost:5000/api/attendance/stats/${localStorage.getItem("userId")}`
+        `http://localhost:5000/api/attendance/stats/${userId}`
       );
       setStats(res.data);
     } catch (error) {
@@ -98,7 +106,11 @@ const Dashboard = () => {
       <h2>QR Attendance</h2>
       <QRGenerator />
     </div>
+    <div style={{ marginTop: "40px", textAlign: "center" }}>
+      <QRScanner />
+    </div>
   </div>
+  
 );
 };
 
@@ -110,18 +122,6 @@ const cardStyle = {
   textAlign: "center",
   boxShadow: "0 4px 10px rgba(0,0,0,0.3)"
 };
-<div>
-    {/* EXISTING DASHBOARD UI */}
-    
-    <h1>Attendance Dashboard</h1>
-    
-    {/* cards, chart etc */}
 
-    {/* 👇 ADD THIS SECTION AT BOTTOM */}
-    <div style={{ marginTop: "40px" }}>
-      <h2>QR Attendance</h2>
-      <QRGenerator />
-    </div>
-  </div>
 
 export default Dashboard;

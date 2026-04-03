@@ -21,13 +21,23 @@ const Login = ({ setIsLoggedIn }) => {
                 form
             );
 
-            localStorage.setItem("token", res.data.token);
-            localStorage.setItem("userId", res.data.user_id);
+            console.log("FULL RESPONSE:", res.data);
+            console.log("USER:", res.data.user);
+            console.log("USER ID:", res.data.user?._id);
 
-            setIsLoggedIn(true);
+            localStorage.setItem("token", res.data.token);
+
+            if (res.data.user && res.data.user._id) {
+              localStorage.setItem("userId", res.data.user._id);
+              console.log("Saved userId:", res.data.user._id);
+              setIsLoggedIn(true); // Set login state
+            } else {
+              console.log("User ID missing in response");
+              alert("Login failed: Invalid user data");
+            }
         } catch (error){
             console.log(error);
-            alert("Login failed!");
+            alert("Login failed: " + (error.response?.data?.message || error.message));
         }
     };
 

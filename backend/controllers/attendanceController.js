@@ -37,16 +37,16 @@ exports.getAttendance = async (req, res) => {
 //GET NUMBER OF PRESENT/ABSENT
 exports.getStats = async (req, res) => {
     try{
-        const { studentId } = req.params;
+        const { userId } = req.params;
 
         //total classes
         const total = await Attendance.countDocuments({
-            student: studentId
+            student: userId
         });
 
         //present counts
         const present = await Attendance.countDocuments({
-            student: studentId,
+            student: userId,
             status: "present"
         });
 
