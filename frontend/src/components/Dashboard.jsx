@@ -5,6 +5,7 @@ import QRGenerator from "./QRGenerator";
 import QRScanner from "./QRScanner";
 import FaceRegister from "./FaceRegister";
 import FaceAttendance from "./FaceAttendance";
+import LectureManagement from "./LectureManagement";
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -105,29 +106,7 @@ const Dashboard = () => {
 
       {/* Teacher-specific features */}
       {userRole === "teacher" && (
-        <div style={{ 
-          textAlign: "center", 
-          marginBottom: "30px", 
-          padding: "20px", 
-          backgroundColor: "#1e293b", 
-          borderRadius: "8px" 
-        }}>
-          <h3>🎓 Teacher Controls</h3>
-          <p style={{ marginBottom: "10px" }}>Start a new lecture for students to mark attendance</p>
-          <button 
-            style={{
-              padding: "12px 24px",
-              backgroundColor: "#22c55e",
-              color: "white",
-              border: "none",
-              borderRadius: "6px",
-              fontSize: "16px",
-              cursor: "pointer"
-            }}
-          >
-            🚀 Start Lecture
-          </button>
-        </div>
+        <LectureManagement />
       )}
 
       {/* Stats Cards */}

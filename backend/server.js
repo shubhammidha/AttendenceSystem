@@ -5,6 +5,7 @@ const classRoutes = require("./routes/classRoutes");
 const attendanceRoutes = require("./routes/attendanceRoutes");
 const qrRoutes = require("./routes/qrRoutes");
 const faceRoutes = require("./routes/faceRoutes");
+const lectureRoutes = require("./routes/lectureRoutes");
 require("dotenv").config();
 
 const authRoutes = require("./routes/authRoutes");
@@ -18,6 +19,7 @@ app.use("/api/class", classRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/qr", qrRoutes);
 app.use("/api/face", faceRoutes);
+app.use("/api/lecture", lectureRoutes);
 
 //Routes
 app.use("/api/auth", authRoutes);
