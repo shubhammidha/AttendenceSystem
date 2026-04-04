@@ -6,6 +6,7 @@ import QRScanner from "./QRScanner";
 import FaceRegister from "./FaceRegister";
 import FaceAttendance from "./FaceAttendance";
 import LectureManagement from "./LectureManagement";
+import TeacherAttendanceOptions from "./TeacherAttendanceOptions";
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -106,67 +107,71 @@ const Dashboard = () => {
 
       {/* Teacher-specific features */}
       {userRole === "teacher" && (
-        <LectureManagement />
+        <>
+          <LectureManagement />
+          <TeacherAttendanceOptions />
+        </>
       )}
 
-      {/* Stats Cards */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          gap: "20px",
-          marginTop: "30px",
-          flexWrap: "wrap"
-        }}
-      >
-        <div style={cardStyle}>
-          <h2>Total Classes</h2>
-          <p>{stats.totalClasses}</p>
-        </div>
+      {/* Stats Cards - Only for students */}
+      {userRole === "student" && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: "20px",
+            marginTop: "30px",
+            flexWrap: "wrap"
+          }}
+        >
+          <div style={cardStyle}>
+            <h2>Total Classes</h2>
+            <p>{stats.totalClasses}</p>
+          </div>
 
-        <div style={cardStyle}>
-          <h2>Present</h2>
-          <p>{stats.present}</p>
-        </div>
+          <div style={cardStyle}>
+            <h2>Present</h2>
+            <p>{stats.present}</p>
+          </div>
 
-        <div style={cardStyle}>
-          <h2>Absent</h2>
-          <p>{stats.absent}</p>
-        </div>
+          <div style={cardStyle}>
+            <h2>Absent</h2>
+            <p>{stats.absent}</p>
+          </div>
 
-        <div style={cardStyle}>
-          <h2>Attendance %</h2>
-          <p>{stats.percentage}%</p>
+          <div style={cardStyle}>
+            <h2>Attendance %</h2>
+            <p>{stats.percentage}%</p>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Pie Chart */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          marginTop: "50px"
-        }}
-      >
-        <PieChart width={450} height={400}>
-          <Pie data={data} dataKey="value" outerRadius={130} label>
-            <Cell fill="#22c55e" />
-            <Cell fill="#ef4444" />
-          </Pie>
-          <Tooltip />
-          <Legend />
-        </PieChart>
-      </div>
+      {/* Pie Chart - Only for students */}
+      {userRole === "student" && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            marginTop: "50px"
+          }}
+        >
+          <PieChart width={450} height={400}>
+            <Pie data={data} dataKey="value" outerRadius={130} label>
+              <Cell fill="#22c55e" />
+              <Cell fill="#ef4444" />
+            </Pie>
+            <Tooltip />
+            <Legend />
+          </PieChart>
+        </div>
+      )}
 
       {/* Student-only features */}
       {userRole === "student" && (
         <>
-          {/* QR SECTION */}
+          {/* QR SCANNER ONLY */}
           <div style={{ marginTop: "60px", textAlign: "center" }}>
             <h2>QR Attendance</h2>
-            <QRGenerator />
-          </div>
-          <div style={{ marginTop: "40px", textAlign: "center" }}>
             <QRScanner />
           </div>
 
