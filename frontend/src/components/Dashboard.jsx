@@ -7,6 +7,7 @@ import FaceRegister from "./FaceRegister";
 import FaceAttendance from "./FaceAttendance";
 import LectureManagement from "./LectureManagement";
 import TeacherAttendanceOptions from "./TeacherAttendanceOptions";
+import StudentAttendance from "./StudentAttendance";
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -168,22 +169,7 @@ const Dashboard = () => {
 
       {/* Student-only features */}
       {userRole === "student" && (
-        <>
-          {/* QR SCANNER ONLY */}
-          <div style={{ marginTop: "60px", textAlign: "center" }}>
-            <h2>QR Attendance</h2>
-            <QRScanner />
-          </div>
-
-          {/* FACE RECOGNITION SECTION */}
-          <div style={{ marginTop: "60px", textAlign: "center" }}>
-            <h2>Face Recognition</h2>
-            <FaceRegister />
-          </div>
-          <div style={{ marginTop: "40px", textAlign: "center" }}>
-            <FaceAttendance />
-          </div>
-        </>
+        <StudentAttendance />
       )}
 
       {/* Teacher-only features would go here */}

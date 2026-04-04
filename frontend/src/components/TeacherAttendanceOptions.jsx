@@ -34,7 +34,6 @@ const TeacherAttendanceOptions = () => {
     const [activeLectures, setActiveLectures] = useState([]);
     const [selectedMethod, setSelectedMethod] = useState("");
     const [qrData, setQrData] = useState("");
-    const [attendanceList, setAttendanceList] = useState([]);
     const [loading, setLoading] = useState(false);
 
     const classId = "69c188592fda59eb47432e5c"; // Default class ID
@@ -52,24 +51,8 @@ const TeacherAttendanceOptions = () => {
                 `http://localhost:5000/api/lecture/active/${classId}`
             );
             setActiveLectures(res.data.activeLectures);
-            
-            // Fetch attendance for active lectures
-            res.data.activeLectures.forEach(lecture => {
-                fetchAttendanceList(lecture.id);
-            });
         } catch (error) {
             console.log("Error fetching active lectures:", error);
-        }
-    };
-
-    const fetchAttendanceList = async (lectureId) => {
-        try {
-            const res = await axios.get(
-                `http://localhost:5000/api/attendance/lecture/${lectureId}`
-            );
-            setAttendanceList(res.data.attendance || []);
-        } catch (error) {
-            console.log("Error fetching attendance list:", error);
         }
     };
 
@@ -92,6 +75,46 @@ const TeacherAttendanceOptions = () => {
             alert("Failed to generate QR code");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const selectAttendanceMethod = async (method) => {
+        if (activeLectures.length === 0) {
+            alert("Please start a lecture first!");
+            return;
+        }
+
+        try {
+            console.log("Setting attendance method:", method, "for lecture:", activeLectures[0].id);
+            const token = localStorage.getItem("token");
+            const res = await axios.post(
+                "http://localhost:5000/api/attendance-method/set",
+                {
+                    lectureId: activeLectures[0].id,
+                    method: method
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            console.log("Set method response:", res.data);
+            alert("✅ " + res.data.message);
+            setSelectedMethod(method);
+            
+            // If QR method, also generate QR
+            if (method === "qr") {
+                await generateQRForLecture(activeLectures[0].id);
+            }
+            
+            // Refresh active lectures to get updated method
+            fetchActiveLectures();
+            
+        } catch (error) {
+            console.log("Error setting attendance method:", error);
+            alert("❌ Failed to set attendance method: " + (error.response?.data?.message || error.message));
         }
     };
 
@@ -147,7 +170,7 @@ const TeacherAttendanceOptions = () => {
                 }}>
                     <h4>🟢 Active Lecture: {lecture.title}</h4>
                     <p>Time remaining: {lecture.timeRemaining} minutes</p>
-                    <p>Students attended: {attendanceList.length}</p>
+                    <p>📱 Attendance method: {selectedMethod || "Not selected"}</p>
                 </div>
             ))}
 
@@ -163,7 +186,7 @@ const TeacherAttendanceOptions = () => {
                     icon="✍️"
                     title="Manual Attendance"
                     description="Mark attendance manually for each student"
-                    onClick={() => setSelectedMethod("manual")}
+                    onClick={() => selectAttendanceMethod("manual")}
                 />
 
                 <AttendanceMethodCard
@@ -171,7 +194,7 @@ const TeacherAttendanceOptions = () => {
                     icon="📱"
                     title="QR Code Attendance"
                     description="Generate QR code for students to scan"
-                    onClick={() => generateQRForLecture(activeLectures[0]?.id)}
+                    onClick={() => selectAttendanceMethod("qr")}
                     disabled={loading}
                 />
 
@@ -180,7 +203,7 @@ const TeacherAttendanceOptions = () => {
                     icon="👤"
                     title="Face Recognition"
                     description="Students use face recognition to mark attendance"
-                    onClick={() => setSelectedMethod("face")}
+                    onClick={() => selectAttendanceMethod("face")}
                 />
             </div>
 
@@ -222,39 +245,7 @@ const TeacherAttendanceOptions = () => {
                 </div>
             )}
 
-            {/* Attendance List */}
-            {attendanceList.length > 0 && (
-                <div style={{ 
-                    marginTop: "30px", 
-                    padding: "20px", 
-                    backgroundColor: "#1e293b", 
-                    borderRadius: "8px" 
-                }}>
-                    <h4>📊 Attendance List ({attendanceList.length} students)</h4>
-                    <div style={{ 
-                        maxHeight: "200px", 
-                        overflowY: "auto",
-                        marginTop: "15px"
-                    }}>
-                        {attendanceList.map((attendance, index) => (
-                            <div key={index} style={{ 
-                                padding: "8px", 
-                                backgroundColor: "#334155", 
-                                margin: "5px 0", 
-                                borderRadius: "4px",
-                                display: "flex",
-                                justifyContent: "space-between"
-                            }}>
-                                <span>Student ID: {attendance.student}</span>
-                                <span style={{ color: "#22c55e" }}>
-                                    {attendance.method} - {new Date(attendance.date).toLocaleTimeString()}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-        </div>
+            </div>
     );
 };
 

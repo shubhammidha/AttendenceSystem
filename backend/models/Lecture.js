@@ -10,6 +10,7 @@
  * - startTime: When lecture starts
  * - endTime: When lecture ends
  * - isActive: Whether lecture is currently active for attendance
+ * - attendanceMethod: Method for taking attendance (face, qr, manual, none)
  * - attendanceMarked: Array of attendance records for this lecture
  * - createdAt: When lecture was created
  * 
@@ -17,6 +18,7 @@
  * - Teachers create lectures for classes
  * - Students can only mark attendance during active lectures
  * - System tracks lecture lifecycle and attendance
+ * - Teacher controls attendance method selection
  * 
  * Relationships:
  * - References User model (teacher)
@@ -50,6 +52,11 @@ const lectureSchema = new mongoose.Schema({
     isActive: {
         type: Boolean,
         default: true
+    },
+    attendanceMethod: {
+        type: String,
+        enum: ["face", "qr", "manual", "none"],
+        default: "none"
     },
     attendanceMarked: [{
         type: mongoose.Schema.Types.ObjectId,
