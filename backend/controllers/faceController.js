@@ -123,7 +123,7 @@ exports.markAttendanceViaFace = async (req, res) => {
         // Step 6: Mark attendance
         const attendance = new Attendance({
             student: userId,
-            class: classId,
+            class: classId.toString(), // Using classId as string to match hardcoded value
             status: "present",
             method: "face",
             date: new Date()

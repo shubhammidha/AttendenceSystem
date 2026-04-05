@@ -38,23 +38,32 @@ const TeacherAttendanceOptions = () => {
 
     const classId = "69c188592fda59eb47432e5c"; // Default class ID
 
-    useEffect(() => {
-        fetchActiveLectures();
-        // Refresh attendance list every 10 seconds
-        const interval = setInterval(fetchActiveLectures, 10000);
-        return () => clearInterval(interval);
-    }, []);
-
     const fetchActiveLectures = async () => {
         try {
+            console.log("TeacherDashboard: Fetching active lectures...");
             const res = await axios.get(
                 `http://localhost:5000/api/lecture/active/${classId}`
             );
+            console.log("TeacherDashboard: Active lectures response:", res.data);
             setActiveLectures(res.data.activeLectures);
+            
+            // Only set selected method if it's not already set
+            if (res.data.activeLectures.length > 0 && !selectedMethod) {
+                const activeLecture = res.data.activeLectures[0];
+                const method = activeLecture.attendanceMethod || "";
+                console.log("TeacherDashboard: Auto-setting selected method from API:", method);
+                setSelectedMethod(method);
+            }
         } catch (error) {
             console.log("Error fetching active lectures:", error);
         }
     };
+
+    useEffect(() => {
+        fetchActiveLectures();
+        const interval = setInterval(fetchActiveLectures, 10000);
+        return () => clearInterval(interval);
+    }, []); // Remove dependency to prevent infinite loop
 
     const generateQRForLecture = async (lectureId) => {
         setLoading(true);
@@ -84,6 +93,11 @@ const TeacherAttendanceOptions = () => {
             return;
         }
 
+        console.log("=== TEACHER SELECTING METHOD ===");
+        console.log("Method to select:", method);
+        console.log("Current selectedMethod before:", selectedMethod);
+        console.log("Active lectures:", activeLectures);
+
         try {
             console.log("Setting attendance method:", method, "for lecture:", activeLectures[0].id);
             const token = localStorage.getItem("token");
@@ -109,8 +123,10 @@ const TeacherAttendanceOptions = () => {
                 await generateQRForLecture(activeLectures[0].id);
             }
             
-            // Refresh active lectures to get updated method
-            fetchActiveLectures();
+            // Immediate refresh to get updated lecture data
+            setTimeout(() => {
+                fetchActiveLectures();
+            }, 1000);
             
         } catch (error) {
             console.log("Error setting attendance method:", error);
@@ -170,18 +186,21 @@ const TeacherAttendanceOptions = () => {
                 }}>
                     <h4>🟢 Active Lecture: {lecture.title}</h4>
                     <p>Time remaining: {lecture.timeRemaining} minutes</p>
-                    <p>📱 Attendance method: {selectedMethod || "Not selected"}</p>
+                    <p>📱 Attendance method: {selectedMethod || "Not selected"} (State: {JSON.stringify(selectedMethod)})</p>
                 </div>
             ))}
 
             {/* Attendance Method Selection - Only show if no method selected */}
-            {!selectedMethod && (
+            {selectedMethod === "" && (
                 <div style={{ 
                     display: "grid", 
                     gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", 
                     gap: "20px", 
                     marginBottom: "30px" 
                 }}>
+                    <p style={{ color: "#fbbf24", marginBottom: "15px", textAlign: "center" }}>
+                        Debug: selectedMethod = "{selectedMethod}", !selectedMethod = {String(!selectedMethod)}
+                    </p>
                     <AttendanceMethodCard
                         method="manual"
                         icon="✍️"

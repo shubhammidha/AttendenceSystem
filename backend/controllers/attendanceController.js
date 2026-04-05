@@ -67,10 +67,14 @@ exports.getStats = async (req, res) => {
     try{
         const { userId } = req.params;
 
+        console.log("Getting stats for userId:", userId);
+
         //total classes
         const total = await Attendance.countDocuments({
             student: userId
         });
+
+        console.log("Total attendance records:", total);
 
         //present counts
         const present = await Attendance.countDocuments({
@@ -78,11 +82,17 @@ exports.getStats = async (req, res) => {
             status: "present"
         });
 
+        console.log("Present records:", present);
+        
         //absent count
         const absent = total - present;
         
+        console.log("Absent records:", absent);
+        
         //percentage 
         const percentage = total === 0 ? 0 : (present / total) * 100;
+
+        console.log("Final stats:", { total, present, absent, percentage });
 
         res.json({
             totalClasses: total,
@@ -90,8 +100,8 @@ exports.getStats = async (req, res) => {
             absent,
             percentage: percentage.toFixed(2)
         });
-    } catch (error){
-        console.log(error);
+    } catch(error){
+        console.log("Get stats error:", error);
         res.status(500).json(error.message);
     }
 }

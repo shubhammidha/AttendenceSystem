@@ -96,6 +96,7 @@ exports.getActiveLectures = async (req, res) => {
                 teacher: lecture.teacher.name,
                 startTime: lecture.startTime,
                 endTime: lecture.endTime,
+                attendanceMethod: lecture.attendanceMethod || "",
                 timeRemaining: Math.floor((lecture.endTime - now) / 1000 / 60) // minutes
             }))
         });

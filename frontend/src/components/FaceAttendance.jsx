@@ -33,6 +33,16 @@ const FaceAttendance = () => {
                 alert("✅ Attendance is already marked for today!");
                 return;
             }
+
+            // Check if attendance method is selected for this lecture
+            const methodCheckRes = await axios.get(
+                `http://localhost:5000/api/attendance-method/active/${classId}`
+            );
+            
+            if (!methodCheckRes.data.activeMethod || methodCheckRes.data.activeMethod === "none") {
+                alert("⚠️ Teacher has not selected an attendance method yet. Please wait for teacher to select a method.");
+                return;
+            }
             
             const stream = await navigator.mediaDevices.getUserMedia({ 
                 video: true 
