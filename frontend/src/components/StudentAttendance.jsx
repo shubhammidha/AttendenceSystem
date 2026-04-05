@@ -30,13 +30,23 @@ import axios from "axios";
 import QRScanner from "./QRScanner";
 import FaceRegister from "./FaceRegister";
 import FaceAttendance from "./FaceAttendance";
+import { useFaceRegistrationStatus } from "./FaceRegistrationStatus";
 
 const StudentAttendance = () => {
     const [activeMethod, setActiveMethod] = useState("none");
     const [loading, setLoading] = useState(true);
     const [lectureInfo, setLectureInfo] = useState(null);
+    const { isRegistered, loading: faceLoading } = useFaceRegistrationStatus();
 
     const classId = "69c188592fda59eb47432e5c"; // Default class ID
+
+    // Function to refresh dashboard stats
+    const refreshDashboardStats = () => {
+        // This will be called by parent Dashboard component
+        window.dispatchEvent(new CustomEvent('attendanceMarked', { 
+            detail: { message: 'Attendance marked successfully' }
+        }));
+    };
 
     useEffect(() => {
         checkActiveMethod();
@@ -153,13 +163,39 @@ const StudentAttendance = () => {
                     <h4>👤 Face Recognition Attendance</h4>
                     
                     {/* Show Face Register if not registered */}
-                    <div style={{ marginBottom: "20px" }}>
-                        <FaceRegister />
-                    </div>
+                    {!isRegistered && (
+                        <div style={{ marginBottom: "20px" }}>
+                            <h5 style={{ color: "#fbbf24", marginBottom: "10px" }}>
+                                📸 Face Registration Required
+                            </h5>
+                            <p style={{ color: "#94a3b8", marginBottom: "15px", fontSize: "14px" }}>
+                                You need to register your face first before using face recognition attendance
+                            </p>
+                            <FaceRegister />
+                        </div>
+                    )}
                     
                     {/* Show Face Attendance for marking */}
                     <div>
-                        <FaceAttendance />
+                        {isRegistered ? (
+                            <div>
+                                <h5 style={{ color: "#22c55e", marginBottom: "10px" }}>
+                                    ✅ Face Registered - Ready for Attendance
+                                </h5>
+                                <FaceAttendance />
+                            </div>
+                        ) : (
+                            <div style={{ 
+                                padding: "15px", 
+                                backgroundColor: "#334155", 
+                                borderRadius: "6px",
+                                textAlign: "center"
+                            }}>
+                                <p style={{ color: "#94a3b8" }}>
+                                    Please register your face first to mark attendance
+                                </p>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

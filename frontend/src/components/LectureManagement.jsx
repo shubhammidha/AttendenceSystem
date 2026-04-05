@@ -39,6 +39,7 @@ import axios from "axios";
 const LectureManagement = () => {
     const [lectures, setLectures] = useState([]);
     const [activeLectures, setActiveLectures] = useState([]);
+    const [otherTeacherLectures, setOtherTeacherLectures] = useState([]);
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         title: "",
@@ -50,6 +51,13 @@ const LectureManagement = () => {
     useEffect(() => {
         fetchActiveLectures();
         fetchTeacherLectures();
+        fetchAllActiveLectures();
+        // Refresh every 30 seconds
+        const interval = setInterval(() => {
+            fetchActiveLectures();
+            fetchAllActiveLectures();
+        }, 30000);
+        return () => clearInterval(interval);
     }, []);
 
     const fetchActiveLectures = async () => {
@@ -74,15 +82,48 @@ const LectureManagement = () => {
                     }
                 }
             );
-            setLectures(res.data.lectures);
+            console.log("Teacher lectures response:", res.data);
+            setLectures(res.data.lectures || []);
         } catch (error) {
             console.log("Error fetching teacher lectures:", error);
+            // Set empty array to prevent undefined errors
+            setLectures([]);
+        }
+    };
+
+    const fetchAllActiveLectures = async () => {
+        try {
+            const token = localStorage.getItem("token");
+            const res = await axios.get(
+                "http://localhost:5000/api/lecture/active-all",
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+            
+            // Filter out current teacher's lectures
+            const otherLectures = res.data.activeLectures.filter(
+                lecture => lecture.teacher._id !== userId
+            );
+            setOtherTeacherLectures(otherLectures);
+        } catch (error) {
+            console.log("Error fetching all active lectures:", error);
+            setOtherTeacherLectures([]);
         }
     };
 
     const startLecture = async () => {
         if (!formData.title) {
             alert("Please enter lecture title");
+            return;
+        }
+
+        // Check if ANY teacher is already active (including current teacher)
+        if (activeLectures.length > 0) {
+            const activeTeacher = activeLectures[0];
+            alert(`⚠️ Cannot start lecture. ${activeTeacher.teacher.name || 'A teacher'} is already taking "${activeTeacher.title}". Please wait for the current lecture to finish.`);
             return;
         }
 
@@ -120,33 +161,37 @@ const LectureManagement = () => {
         <div style={{ marginTop: "40px", textAlign: "center" }}>
             <h3>🎓 Lecture Management</h3>
             
-            {/* Start New Lecture */}
-            <div style={{ 
-                marginBottom: "30px", 
-                padding: "20px", 
-                backgroundColor: "#1e293b", 
-                borderRadius: "8px" 
-            }}>
-                <h4>Start New Lecture</h4>
-                <div style={{ marginTop: "15px" }}>
-                    <input
-                        type="text"
-                        placeholder="Lecture Title"
-                        value={formData.title}
-                        onChange={(e) => setFormData({...formData, title: e.target.value})}
-                        style={{
-                            padding: "8px 12px",
-                            borderRadius: "4px",
-                            border: "1px solid #ccc",
-                            marginRight: "10px",
-                            width: "200px"
-                        }}
-                    />
+            {/* Start New Lecture - Only show if no active lectures */}
+            {activeLectures.length === 0 && (
+                <div style={{ 
+                    marginBottom: "30px", 
+                    padding: "20px", 
+                    backgroundColor: "#1e293b", 
+                    borderRadius: "8px" 
+                }}>
+                    <h3>Start New Lecture</h3>
+                    <div style={{ marginBottom: "15px" }}>
+                        <input
+                            type="text"
+                            placeholder="Lecture Title"
+                            value={formData.title}
+                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                            style={{
+                                width: "100%",
+                                padding: "10px",
+                                borderRadius: "4px",
+                                border: "1px solid #475569",
+                                backgroundColor: "#0f172a",
+                                color: "white",
+                                fontSize: "16px"
+                            }}
+                        />
+                    </div>
                     <button
                         onClick={startLecture}
-                        disabled={loading}
+                        disabled={loading || !formData.title.trim()}
                         style={{
-                            padding: "8px 16px",
+                            padding: "12px 24px",
                             backgroundColor: loading ? "#ccc" : "#22c55e",
                             color: "white",
                             border: "none",
@@ -157,7 +202,38 @@ const LectureManagement = () => {
                         {loading ? "Starting..." : "🚀 Start Lecture (50 min)"}
                     </button>
                 </div>
-            </div>
+            )}
+
+            {/* Other Teachers' Active Lectures */}
+            {otherTeacherLectures.length > 0 && (
+                <div style={{ 
+                    marginBottom: "30px", 
+                    padding: "20px", 
+                    backgroundColor: "#dc2626", 
+                    borderRadius: "8px" 
+                }}>
+                    <h4>⚠️ Other Teachers' Active Lectures</h4>
+                    <p style={{ color: "#fca5a5", marginBottom: "15px" }}>
+                        Cannot start new lecture while other teachers are conducting classes
+                    </p>
+                    {otherTeacherLectures.map((lecture) => (
+                        <div key={lecture._id} style={{ 
+                            marginTop: "10px", 
+                            padding: "10px", 
+                            backgroundColor: "#991b1b", 
+                            borderRadius: "4px" 
+                        }}>
+                            <strong>👨‍🏫 {lecture.teacher.name}</strong>
+                            <br />
+                            📚 {lecture.title}
+                            <br />
+                            <small style={{ color: "#fca5a5" }}>
+                                Started: {new Date(lecture.startTime).toLocaleTimeString()}
+                            </small>
+                        </div>
+                    ))}
+                </div>
+            )}
 
             {/* Active Lectures */}
             {activeLectures.length > 0 && (
@@ -184,7 +260,7 @@ const LectureManagement = () => {
             )}
 
             {/* Lecture History */}
-            {lectures.length > 0 && (
+            {lectures && lectures.length > 0 && (
                 <div style={{ 
                     padding: "20px", 
                     backgroundColor: "#1e293b", 

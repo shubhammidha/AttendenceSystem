@@ -23,7 +23,7 @@
 const express = require("express");
 const router = express.Router();
 
-const { startLecture, getActiveLectures, endLecture, getTeacherLectures } = require("../controllers/lectureController");
+const { startLecture, getActiveLectures, endLecture, getTeacherLectures, getLectureHistory, getAllActiveLectures } = require("../controllers/lectureController");
 const authMiddleware = require("../middleware/auth");
 
 // Middleware to verify teacher role for lecture operations
@@ -44,7 +44,10 @@ router.get("/active/:classId", getActiveLectures);
 // End lecture (teacher only)
 router.put("/end/:lectureId", authMiddleware, verifyTeacher, endLecture);
 
+// Get all active lectures (for teacher conflict checking)
+router.get("/active-all", authMiddleware, verifyTeacher, getAllActiveLectures);
+
 // Get teacher's lecture history
-router.get("/history", authMiddleware, verifyTeacher, getTeacherLectures);
+router.get("/history", authMiddleware, verifyTeacher, getLectureHistory);
 
 module.exports = router;

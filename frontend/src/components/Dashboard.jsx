@@ -31,6 +31,18 @@ const Dashboard = () => {
     } else {
       console.log("No role found, defaulting to student");
     }
+
+    // Listen for attendance marked events
+    const handleAttendanceMarked = () => {
+      console.log("Attendance marked, refreshing stats...");
+      fetchStats();
+    };
+
+    window.addEventListener('attendanceMarked', handleAttendanceMarked);
+
+    return () => {
+      window.removeEventListener('attendanceMarked', handleAttendanceMarked);
+    };
   }, []);
 
   const fetchStats = async () => {

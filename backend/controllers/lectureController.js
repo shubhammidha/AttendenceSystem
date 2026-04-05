@@ -134,19 +134,52 @@ exports.endLecture = async (req, res) => {
     }
 };
 
-// Get lecture history for teacher
+// Get teacher's active lectures
 exports.getTeacherLectures = async (req, res) => {
     try {
         const teacherId = req.user.id;
 
-        const lectures = await Lecture.find({ teacher: teacherId })
-            .sort({ createdAt: -1 })
-            .limit(20);
+        const lectures = await Lecture.find({ 
+            teacher: teacherId,
+            isActive: true 
+        }).populate('attendanceMarked');
+
+        res.json({ activeLectures: lectures });
+
+    } catch (error) {
+        console.log("Get teacher lectures error:", error);
+        res.status(500).json({ message: "Failed to fetch lectures" });
+    }
+};
+
+// Get all active lectures (for all teachers)
+exports.getAllActiveLectures = async (req, res) => {
+    try {
+        const activeLectures = await Lecture.find({ 
+            isActive: true 
+        }).populate('teacher', 'name email');
+
+        res.json({ activeLectures });
+
+    } catch (error) {
+        console.log("Get all active lectures error:", error);
+        res.status(500).json({ message: "Failed to fetch active lectures" });
+    }
+};
+
+// Get teacher's lecture history
+exports.getLectureHistory = async (req, res) => {
+    try {
+        const teacherId = req.user.id;
+
+        const lectures = await Lecture.find({ 
+            teacher: teacherId 
+        }).sort({ createdAt: -1 }).limit(10);
 
         res.json({ lectures });
 
     } catch (error) {
-        console.log("Get teacher lectures error:", error);
-        res.status(500).json({ message: "Failed to get lecture history" });
+        console.log("Get lecture history error:", error);
+        res.status(500).json({ message: "Failed to fetch lecture history" });
     }
 };

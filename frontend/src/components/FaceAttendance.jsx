@@ -13,9 +13,27 @@ const FaceAttendance = () => {
 
     const userId = localStorage.getItem("userId");
 
+    // Function to refresh dashboard stats
+    const refreshDashboardStats = () => {
+        window.dispatchEvent(new CustomEvent('attendanceMarked', { 
+            detail: { message: 'Attendance marked successfully' }
+        }));
+    };
+
     const startCamera = async () => {
         try {
             console.log("Starting camera for attendance...");
+            
+            // First check if attendance is already marked
+            const attendanceCheckRes = await axios.get(
+                `http://localhost:5000/api/attendance/check/${userId}/${classId}`
+            );
+            
+            if (attendanceCheckRes.data.alreadyMarked) {
+                alert("✅ Attendance is already marked for today!");
+                return;
+            }
+            
             const stream = await navigator.mediaDevices.getUserMedia({ 
                 video: true 
             });
@@ -42,7 +60,11 @@ const FaceAttendance = () => {
             }
         } catch (error) {
             console.log("Camera access error for attendance:", error);
-            alert("Unable to access camera. Please check permissions.");
+            if (error.response?.status === 400 && error.response?.data?.message?.includes("already marked")) {
+                alert("✅ Attendance is already marked for today!");
+            } else {
+                alert("Unable to access camera. Please check permissions.");
+            }
         }
     };
 
@@ -102,6 +124,9 @@ const FaceAttendance = () => {
             setAttendanceResult(res.data);
             alert("✅ " + res.data.message);
             setCapturedImage("");
+            
+            // Refresh dashboard stats
+            refreshDashboardStats();
             
         } catch (error) {
             console.log("Face attendance error:", error);

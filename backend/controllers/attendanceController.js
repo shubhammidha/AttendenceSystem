@@ -1,5 +1,33 @@
 const Attendance = require("../models/Attendance");
 
+// Check if attendance is already marked for today
+exports.checkAttendanceStatus = async (req, res) => {
+    try {
+        const { userId, classId } = req.params;
+
+        // Check if attendance already marked today
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const existingAttendance = await Attendance.findOne({
+            student: userId,
+            class: classId,
+            date: {
+                $gte: today
+            }
+        });
+
+        res.json({
+            alreadyMarked: !!existingAttendance,
+            attendanceRecord: existingAttendance
+        });
+
+    } catch (error) {
+        console.log("Check attendance status error:", error);
+        res.status(500).json({ message: "Failed to check attendance status" });
+    }
+};
+
 // Mark attendence
 exports.markAttendance = async (req, res) => {
     try{

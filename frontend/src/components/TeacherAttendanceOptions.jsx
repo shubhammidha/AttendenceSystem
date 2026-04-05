@@ -174,38 +174,57 @@ const TeacherAttendanceOptions = () => {
                 </div>
             ))}
 
-            {/* Attendance Method Selection */}
-            <div style={{ 
-                display: "grid", 
-                gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", 
-                gap: "20px", 
-                marginBottom: "30px" 
-            }}>
-                <AttendanceMethodCard
-                    method="manual"
-                    icon="✍️"
-                    title="Manual Attendance"
-                    description="Mark attendance manually for each student"
-                    onClick={() => selectAttendanceMethod("manual")}
-                />
+            {/* Attendance Method Selection - Only show if no method selected */}
+            {!selectedMethod && (
+                <div style={{ 
+                    display: "grid", 
+                    gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", 
+                    gap: "20px", 
+                    marginBottom: "30px" 
+                }}>
+                    <AttendanceMethodCard
+                        method="manual"
+                        icon="✍️"
+                        title="Manual Attendance"
+                        description="Mark attendance manually for each student"
+                        onClick={() => selectAttendanceMethod("manual")}
+                    />
 
-                <AttendanceMethodCard
-                    method="qr"
-                    icon="📱"
-                    title="QR Code Attendance"
-                    description="Generate QR code for students to scan"
-                    onClick={() => selectAttendanceMethod("qr")}
-                    disabled={loading}
-                />
+                    <AttendanceMethodCard
+                        method="qr"
+                        icon="📱"
+                        title="QR Code Attendance"
+                        description="Generate QR code for students to scan"
+                        onClick={() => selectAttendanceMethod("qr")}
+                        disabled={loading}
+                    />
 
-                <AttendanceMethodCard
-                    method="face"
-                    icon="👤"
-                    title="Face Recognition"
-                    description="Students use face recognition to mark attendance"
-                    onClick={() => selectAttendanceMethod("face")}
-                />
-            </div>
+                    <AttendanceMethodCard
+                        method="face"
+                        icon="👤"
+                        title="Face Recognition"
+                        description="Students use face recognition to mark attendance"
+                        onClick={() => selectAttendanceMethod("face")}
+                    />
+                </div>
+            )}
+
+            {/* Method Already Selected Message */}
+            {selectedMethod && (
+                <div style={{ 
+                    padding: "20px", 
+                    backgroundColor: "#1e293b", 
+                    borderRadius: "8px",
+                    textAlign: "center",
+                    marginBottom: "30px"
+                }}>
+                    <h4>✅ Attendance Method Set</h4>
+                    <p>Method: <strong>{selectedMethod.charAt(0).toUpperCase() + selectedMethod.slice(1)}</strong></p>
+                    <p style={{ color: "#94a3b8", fontSize: "14px" }}>
+                        Students can now mark attendance using this method
+                    </p>
+                </div>
+            )}
 
             {/* Selected Method Display */}
             {selectedMethod && (
