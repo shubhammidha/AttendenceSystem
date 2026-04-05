@@ -82,19 +82,36 @@ exports.setAttendanceMethod = async (req, res) => {
         const { lectureId, method } = req.body;
         const teacherId = req.user.id;
 
+        console.log("=== SETTING ATTENDANCE METHOD ===");
+        console.log("Request body:", req.body);
+        console.log("Teacher ID:", teacherId);
+        console.log("Lecture ID:", lectureId);
+        console.log("Method:", method);
+
         const lecture = await Lecture.findById(lectureId);
         if (!lecture) {
+            console.log("Lecture not found with ID:", lectureId);
             return res.status(404).json({ message: "Lecture not found" });
         }
 
+        console.log("Found lecture:", {
+            id: lecture._id,
+            title: lecture.title,
+            currentMethod: lecture.attendanceMethod,
+            teacher: lecture.teacher
+        });
+
         // Verify teacher owns this lecture
         if (lecture.teacher.toString() !== teacherId) {
+            console.log("Teacher mismatch - lecture teacher:", lecture.teacher, "requesting teacher:", teacherId);
             return res.status(403).json({ message: "You can only manage your own lectures" });
         }
 
         // Set attendance method - this determines what students see
         lecture.attendanceMethod = method;
         await lecture.save();
+
+        console.log("Updated lecture attendance method to:", method);
 
         res.json({ 
             message: "Attendance method set successfully",

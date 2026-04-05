@@ -120,10 +120,14 @@ const LectureManagement = () => {
             return;
         }
 
-        // Check if ANY teacher is already active (including current teacher)
-        if (activeLectures.length > 0) {
-            const activeTeacher = activeLectures[0];
-            alert(`⚠️ Cannot start lecture. ${activeTeacher.teacher.name || 'A teacher'} is already taking "${activeTeacher.title}". Please wait for the current lecture to finish.`);
+        // Check if current teacher already has an active lecture
+        const currentTeacherActiveLectures = activeLectures.filter(
+            lecture => lecture.teacher._id === userId
+        );
+        
+        if (currentTeacherActiveLectures.length > 0) {
+            const activeTeacher = currentTeacherActiveLectures[0];
+            alert(`⚠️ You already have an active lecture: "${activeTeacher.title}". Please end it first before starting a new one.`);
             return;
         }
 
@@ -154,7 +158,39 @@ const LectureManagement = () => {
     };
 
     const endLecture = async (lectureId) => {
-        console.log("Lectures automatically end after 50 minutes");
+        if (!lectureId) {
+            alert("Please provide lecture ID");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const token = localStorage.getItem("token");
+            const res = await axios.put(
+                `http://localhost:5000/api/lecture/end/${lectureId}`,
+                {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            alert("✅ " + res.data.message);
+            fetchTeacherLectures();
+            fetchAllActiveLectures();
+            
+            // Also refresh the TeacherAttendanceOptions component
+            window.dispatchEvent(new CustomEvent('lectureEnded', { 
+                detail: { lectureId: lectureId } 
+            }));
+            
+        } catch (error) {
+            console.log("End lecture error:", error);
+            alert("❌ Failed to end lecture: " + (error.response?.data?.message || error.message));
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -254,6 +290,21 @@ const LectureManagement = () => {
                             <strong>{lecture.title}</strong> by {lecture.teacher}
                             <br />
                             <small>Time remaining: {lecture.timeRemaining} minutes</small>
+                            <br />
+                            <button
+                                onClick={() => endLecture(lecture.id)}
+                                style={{
+                                    padding: "8px 16px",
+                                    backgroundColor: "#dc2626",
+                                    color: "white",
+                                    border: "none",
+                                    borderRadius: "4px",
+                                    cursor: "pointer",
+                                    marginTop: "10px"
+                                }}
+                            >
+                                🛑 End Lecture
+                            </button>
                         </div>
                     ))}
                 </div>

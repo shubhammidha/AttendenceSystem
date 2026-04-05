@@ -89,6 +89,13 @@ exports.getActiveLectures = async (req, res) => {
             endTime: { $gte: now }
         }).populate('teacher', 'name email');
 
+        console.log("Backend: Found lectures:", activeLectures.map(l => ({
+            id: l._id,
+            title: l.title,
+            attendanceMethod: l.attendanceMethod,
+            allFields: Object.keys(l.toObject())
+        })));
+
         res.json({
             activeLectures: activeLectures.map(lecture => ({
                 id: lecture._id,

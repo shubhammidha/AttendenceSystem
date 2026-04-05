@@ -47,12 +47,15 @@ const TeacherAttendanceOptions = () => {
             console.log("TeacherDashboard: Active lectures response:", res.data);
             setActiveLectures(res.data.activeLectures);
             
-            // Only set selected method if it's not already set
-            if (res.data.activeLectures.length > 0 && !selectedMethod) {
+            // Only set selected method if it's not already set OR if it's different
+            if (res.data.activeLectures.length > 0) {
                 const activeLecture = res.data.activeLectures[0];
                 const method = activeLecture.attendanceMethod || "";
                 console.log("TeacherDashboard: Auto-setting selected method from API:", method);
                 setSelectedMethod(method);
+            } else {
+                console.log("TeacherDashboard: No active lectures");
+                setSelectedMethod("");
             }
         } catch (error) {
             console.log("Error fetching active lectures:", error);
@@ -62,7 +65,18 @@ const TeacherAttendanceOptions = () => {
     useEffect(() => {
         fetchActiveLectures();
         const interval = setInterval(fetchActiveLectures, 10000);
-        return () => clearInterval(interval);
+        
+        // Listen for lecture ended events
+        const handleLectureEnded = () => {
+            fetchActiveLectures();
+        };
+        
+        window.addEventListener('lectureEnded', handleLectureEnded);
+        
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('lectureEnded', handleLectureEnded);
+        };
     }, []); // Remove dependency to prevent infinite loop
 
     const generateQRForLecture = async (lectureId) => {
@@ -173,8 +187,21 @@ const TeacherAttendanceOptions = () => {
     }
 
     return (
-        <div style={{ marginTop: "40px", textAlign: "center" }}>
+        <div style={{ padding: "20px", backgroundColor: "#1e293b", borderRadius: "8px" }}>
             <h3>📋 Attendance Options</h3>
+            
+            {/* Debug Info */}
+            <div style={{ 
+                padding: "10px", 
+                backgroundColor: "#374151", 
+                borderRadius: "4px", 
+                marginBottom: "20px",
+                fontSize: "12px"
+            }}>
+                <p>🔍 Debug: selectedMethod = "{selectedMethod}"</p>
+                <p>🔍 Debug: activeLectures.length = {activeLectures.length}</p>
+                <p>🔍 Debug: shouldShowCards = {String(selectedMethod === "")}</p>
+            </div>
             
             {/* Active Lecture Info */}
             {activeLectures.map((lecture) => (
@@ -191,7 +218,7 @@ const TeacherAttendanceOptions = () => {
             ))}
 
             {/* Attendance Method Selection - Only show if no method selected */}
-            {selectedMethod === "" && (
+            {(selectedMethod === "" || selectedMethod === "none") && (
                 <div style={{ 
                     display: "grid", 
                     gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", 
