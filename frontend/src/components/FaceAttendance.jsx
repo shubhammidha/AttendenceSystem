@@ -35,9 +35,15 @@ const FaceAttendance = () => {
             }
 
             // Check if attendance method is selected for this lecture
+            console.log("Checking attendance method for classId:", classId);
+            console.log("Making API call to: http://localhost:5000/api/attendance-method/active/" + classId);
             const methodCheckRes = await axios.get(
                 `http://localhost:5000/api/attendance-method/active/${classId}`
             );
+            
+            console.log("Method check response:", methodCheckRes.data);
+            console.log("Method check response type:", typeof methodCheckRes.data);
+            console.log("Active method from response:", methodCheckRes.data.activeMethod);
             
             if (!methodCheckRes.data.activeMethod || methodCheckRes.data.activeMethod === "none") {
                 alert("⚠️ Teacher has not selected an attendance method yet. Please wait for teacher to select a method.");
@@ -70,6 +76,10 @@ const FaceAttendance = () => {
             }
         } catch (error) {
             console.log("Camera access error for attendance:", error);
+            console.log("Error status:", error.response?.status);
+            console.log("Error message:", error.response?.data?.message);
+            console.log("Error includes 'already marked':", error.response?.data?.message?.includes("already marked"));
+            
             if (error.response?.status === 400 && error.response?.data?.message?.includes("already marked")) {
                 alert("✅ Attendance is already marked for today!");
             } else {

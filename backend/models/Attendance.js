@@ -9,6 +9,11 @@ const attendanceSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Class"
   },
+  lecture: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Lecture",
+    required: false
+  },
   date: {
     type: Date,
     default: Date.now
