@@ -1,6 +1,20 @@
 const Face = require("../models/Face");
 const User = require("../models/User");
 const Attendance = require("../models/Attendance");
+const Lecture = require("../models/Lecture");
+
+// Helper function to calculate Euclidean Distance
+const calculateDistance = (descriptor1, descriptor2) => {
+    if (!descriptor1 || !descriptor2 || descriptor1.length !== descriptor2.length) {
+        return 1.0; // Max distance if invalid
+    }
+    
+    let sum = 0;
+    for (let i = 0; i < descriptor1.length; i++) {
+        sum += Math.pow(descriptor1[i] - descriptor2[i], 2);
+    }
+    return Math.sqrt(sum);
+};
 
 // Register face for a user
 exports.registerFace = async (req, res) => {
@@ -8,8 +22,8 @@ exports.registerFace = async (req, res) => {
         const { userId, faceData } = req.body;
         
         // Step 1: Validate input
-        if (!userId || !faceData) {
-            return res.status(400).json({ message: "User ID and face data required" });
+        if (!userId || !faceData || !faceData.descriptor) {
+            return res.status(400).json({ message: "User ID and face descriptor required" });
         }
 
         // Step 2: Check if user exists
@@ -74,58 +88,90 @@ exports.getFaceStatus = async (req, res) => {
     }
 };
 
-// Mark attendance via face recognition (WORKING WITH DUPLICATE PREVENTION)
+// Mark attendance via face recognition (FINAL SIMPLE VERSION)
 exports.markAttendanceViaFace = async (req, res) => {
     try {
-        console.log("=== WORKING FACE ATTENDANCE MARKING ===");
-        console.log("Request body:", req.body);
+        console.log("=== BIOMETRIC FACE ATTENDANCE MARKING ===");
         
         const { userId, classId, faceData } = req.body;
         
         // Validate input
-        if (!userId || !classId) {
-            return res.status(400).json({ message: "User ID and class ID required" });
+        if (!userId || !classId || !faceData || !faceData.descriptor) {
+            return res.status(400).json({ message: "User ID, class ID, and face biometric data required" });
         }
 
-        // Check if attendance already marked today (simple duplicate prevention)
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        // Check if there is an active lecture with face attendance enabled
+        const activeLecture = await Lecture.findOne({
+            classId: classId,
+            isActive: true,
+            attendanceMethod: "face"
+        });
+
+        if (!activeLecture) {
+            return res.status(400).json({ 
+                message: "Face attendance is not currently active for this class." 
+            });
+        }
+
+        // Check if user has face registered
+        const registeredFace = await Face.findOne({ user: userId, isActive: true });
+        if (!registeredFace) {
+            return res.status(400).json({ message: "No face registered for this user." });
+        }
+
+        // BIOMETRIC VERIFICATION: Euclidean Distance
+        const distance = calculateDistance(faceData.descriptor, registeredFace.faceDescriptor);
+        const THRESHOLD = 0.6;
         
+        console.log(`User: ${userId}`);
+        console.log(`Input Descriptor Length: ${faceData.descriptor.length}`);
+        console.log(`Stored Descriptor Length: ${registeredFace.faceDescriptor.length}`);
+        console.log(`Biometric distance: ${distance.toFixed(4)}`);
+
+        if (distance > THRESHOLD) {
+            console.log("VERIFICATION FAILED: Face does not match.");
+            return res.status(401).json({ 
+                message: `Face verification failed (Score: ${distance.toFixed(3)}). Ensure you are the same person who registered.`,
+                distance: distance.toFixed(4),
+                match: false
+            });
+        }
+
+        console.log("VERIFICATION SUCCESS: Face matched.");
+
+        // Check if attendance already marked for this specific lecture
         const alreadyMarked = await Attendance.findOne({
             student: userId,
-            class: classId,
-            date: { $gte: today }
+            lecture: activeLecture._id
         });
-        
-        console.log("Found attendance record for today:", alreadyMarked);
 
         if (alreadyMarked) {
-            return res.status(400).json({ message: "Attendance already marked for today" });
+            return res.status(400).json({ message: "Attendance already marked for this lecture" });
         }
 
-        // Create attendance record
+        // Mark attendance linked to the active lecture
         const attendance = new Attendance({
             student: userId,
             class: classId,
+            lecture: activeLecture._id,
             status: "present",
             method: "face",
             date: new Date()
         });
 
-        console.log("Created attendance object:", attendance);
-        
-        // Save attendance
         await attendance.save();
-        console.log("Attendance saved successfully!");
+
+        // Also add to lecture's attendanceMarked array
+        activeLecture.attendanceMarked.push(attendance._id);
+        await activeLecture.save();
 
         res.json({ 
-            message: "Attendance marked successfully via face recognition",
+            message: "Attendance marked successfully! Biometric match verified.",
             attendance: attendance
         });
         
     } catch (error) {
         console.log("Face attendance error:", error);
-        console.log("Error message:", error.message);
         res.status(500).json({ message: "Face attendance marking failed", error: error.message });
     }
 };

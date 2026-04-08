@@ -7,7 +7,7 @@ const faceSchema = new mongoose.Schema({
         required: true
     },
     faceDescriptor: {
-        type: String,
+        type: [Number],
         required: true
     },
     faceImage: {

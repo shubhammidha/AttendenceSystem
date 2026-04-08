@@ -95,9 +95,20 @@ const FaceRegister = () => {
         setLoading(true);
         
         try {
-            // Simulate face data extraction (in production, use face-api.js)
+            // Create a DETERMINISTIC 128-float descriptor for this user (simulated)
+            // This ensures that the "registered" face matches the "attendance" face for testing
+            const generateSimulatedDescriptor = (id) => {
+                const seed = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+                return Array.from({ length: 128 }, (_, i) => {
+                    const val = Math.sin(seed + i) * 0.5 + 0.5; // Values between 0 and 1
+                    return val;
+                });
+            };
+
+            const simulatedDescriptor = generateSimulatedDescriptor(userId);
+
             const faceData = {
-                descriptor: "simulated-face-descriptor-" + Date.now(),
+                descriptor: simulatedDescriptor,
                 image: capturedImage,
                 userId: userId
             };

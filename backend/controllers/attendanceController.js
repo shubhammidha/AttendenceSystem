@@ -29,11 +29,18 @@ exports.checkAttendanceStatus = async (req, res) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+
+        const endOfDay = new Date();
+        endOfDay.setHours(23, 59, 59, 999);
+
         const existingAttendance = await Attendance.findOne({
             student: userId,
             class: classId,
             date: {
-                $gte: today
+                $gte: startOfDay,
+                $lte: endOfDay
             }
         });
 
