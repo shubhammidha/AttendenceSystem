@@ -67,22 +67,58 @@ exports.checkAttendanceStatus = async (req, res) => {
 
 // Mark attendence
 exports.markAttendance = async (req, res) => {
-    try{
-        const {studentId, classId} = req.body;
+    try {
+        const { studentId, classId, lectureId, status, method } = req.body;
 
-        const attendance = new Attendance({
+        // Check if attendance already exists for this student, class, and lecture
+        let attendance = await Attendance.findOne({
             student: studentId,
             class: classId,
-            status: "present",
-            method: "manual"
+            lecture: lectureId
+        });
+
+        if (attendance) {
+            // Update existing record
+            attendance.status = status || "present";
+            attendance.method = method || "manual";
+            await attendance.save();
+            return res.json({ message: "Attendance updated", attendance });
+        }
+
+        // Create new record
+        attendance = new Attendance({
+            student: studentId,
+            class: classId,
+            lecture: lectureId,
+            status: status || "present",
+            method: method || "manual"
         });
 
         await attendance.save();
 
-        res.json({message: "Attendance marked"});
-    } catch(error){
-        console.log("Get stats error:", error);
-        res.status(500).json(error.message);
+        // If it's a specific lecture, we might want to update the lecture's attendanceMarked array
+        if (lectureId) {
+            const Lecture = require("../models/Lecture");
+            await Lecture.findByIdAndUpdate(lectureId, {
+                $addToSet: { attendanceMarked: attendance._id }
+            });
+        }
+
+        res.json({ message: "Attendance marked", attendance });
+    } catch (error) {
+        console.log("Mark attendance error:", error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Get attendance for a specific lecture
+exports.getLectureAttendance = async (req, res) => {
+    try {
+        const { lectureId } = req.params;
+        const attendance = await Attendance.find({ lecture: lectureId }).populate("student", "name email");
+        res.json(attendance);
+    } catch (error) {
+        res.status(500).json({ message: "Failed to fetch lecture attendance" });
     }
 };
 

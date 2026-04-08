@@ -36,9 +36,8 @@ const StudentAttendance = () => {
     const [activeMethod, setActiveMethod] = useState("none");
     const [loading, setLoading] = useState(true);
     const [lectureInfo, setLectureInfo] = useState(null);
+    const [studentClasses, setStudentClasses] = useState([]);
     const { isRegistered, loading: faceLoading } = useFaceRegistrationStatus();
-
-    const classId = "69c188592fda59eb47432e5c"; // Default class ID
 
     // Function to refresh dashboard stats
     const refreshDashboardStats = () => {
@@ -49,35 +48,65 @@ const StudentAttendance = () => {
     };
 
     useEffect(() => {
-        checkActiveMethod();
-        // Check every 10 seconds for updates
-        const interval = setInterval(checkActiveMethod, 10000);
-        return () => clearInterval(interval);
+        fetchStudentClasses();
     }, []);
 
-    const checkActiveMethod = async () => {
+    const fetchStudentClasses = async () => {
         try {
-            console.log("Checking active method for classId:", classId);
-            const res = await axios.get(
-                `http://localhost:5000/api/attendance-method/active/${classId}`
-            );
-            
-            console.log("API Response:", res.data);
-            
-            setActiveMethod(res.data.activeMethod || "none");
-            setLectureInfo(res.data.lectureTitle ? {
-                title: res.data.lectureTitle,
-                id: res.data.lectureId
-            } : null);
-            
+            const token = localStorage.getItem("token");
+            const res = await axios.get("http://localhost:5000/api/class/student", {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setStudentClasses(res.data);
+            checkAllActiveMethods(res.data);
         } catch (error) {
-            console.log("Error checking active method:", error);
-            // For demo, fallback to checking if any lectures are active
+            console.log("Error fetching student classes:", error);
+            setLoading(false);
+        }
+    };
+
+    const checkAllActiveMethods = async (classes) => {
+        if (!classes || classes.length === 0) {
+            setLoading(false);
+            return;
+        }
+
+        try {
+            // Check active method for each class student is enrolled in
+            for (const cls of classes) {
+                const res = await axios.get(
+                    `http://localhost:5000/api/attendance-method/active/${cls._id}`
+                );
+                
+                if (res.data.activeMethod && res.data.activeMethod !== "none") {
+                    setActiveMethod(res.data.activeMethod);
+                    setLectureInfo({
+                        title: res.data.lectureTitle,
+                        id: res.data.lectureId,
+                        classId: cls._id,
+                        className: cls.className
+                    });
+                    setLoading(false);
+                    return; // Found an active lecture, stop searching
+                }
+            }
+            
+            // If we get here, no active lectures found
             setActiveMethod("none");
+            setLectureInfo(null);
+        } catch (error) {
+            console.log("Error checking active methods:", error);
         } finally {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        if (studentClasses.length > 0) {
+            const interval = setInterval(() => checkAllActiveMethods(studentClasses), 10000);
+            return () => clearInterval(interval);
+        }
+    }, [studentClasses]);
 
     if (loading) {
         return (
@@ -150,7 +179,7 @@ const StudentAttendance = () => {
                     borderRadius: "8px" 
                 }}>
                     <h4>📱 QR Scanner</h4>
-                    <QRScanner />
+                    <QRScanner classId={lectureInfo.classId} lectureId={lectureInfo.id} />
                 </div>
             )}
 
@@ -182,7 +211,7 @@ const StudentAttendance = () => {
                                 <h5 style={{ color: "#22c55e", marginBottom: "10px" }}>
                                     ✅ Face Registered - Ready for Attendance
                                 </h5>
-                                <FaceAttendance />
+                                <FaceAttendance classId={lectureInfo.classId} lectureId={lectureInfo.id} />
                             </div>
                         ) : (
                             <div style={{ 

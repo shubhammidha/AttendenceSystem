@@ -39,26 +39,48 @@ import axios from "axios";
 const LectureManagement = () => {
     const [lectures, setLectures] = useState([]);
     const [activeLectures, setActiveLectures] = useState([]);
+    const [classes, setClasses] = useState([]);
     const [otherTeacherLectures, setOtherTeacherLectures] = useState([]);
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         title: "",
-        classId: "69c188592fda59eb47432e5c"
+        classId: ""
     });
 
     const userId = localStorage.getItem("userId");
 
     useEffect(() => {
-        fetchActiveLectures();
+        fetchTeacherClasses();
         fetchTeacherLectures();
         fetchAllActiveLectures();
         // Refresh every 30 seconds
         const interval = setInterval(() => {
-            fetchActiveLectures();
             fetchAllActiveLectures();
         }, 30000);
         return () => clearInterval(interval);
     }, []);
+
+    const fetchTeacherClasses = async () => {
+        try {
+            const token = localStorage.getItem("token");
+            const res = await axios.get("http://localhost:5000/api/class/teacher", {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setClasses(res.data);
+            if (res.data.length > 0) {
+                setFormData(prev => ({ ...prev, classId: res.data[0]._id }));
+            }
+        } catch (error) {
+            console.log("Error fetching teacher classes:", error);
+        }
+    };
+
+    // Use a separate effect to fetch active lectures when classId changes
+    useEffect(() => {
+        if (formData.classId) {
+            fetchActiveLectures();
+        }
+    }, [formData.classId]);
 
     const fetchActiveLectures = async () => {
         try {
@@ -197,7 +219,28 @@ const LectureManagement = () => {
         <div style={{ marginTop: "40px", textAlign: "center" }}>
             <h3>🎓 Lecture Management</h3>
             
-            {/* Start New Lecture - Only show if no active lectures */}
+            {/* Class Selection */}
+            <div style={{ marginBottom: "20px", display: "flex", justifyContent: "center", gap: "10px", alignItems: "center" }}>
+                <span>Select Class:</span>
+                <select 
+                    value={formData.classId}
+                    onChange={(e) => setFormData({ ...formData, classId: e.target.value })}
+                    style={{
+                        padding: "8px",
+                        borderRadius: "4px",
+                        backgroundColor: "#1e293b",
+                        color: "white",
+                        border: "1px solid #475569"
+                    }}
+                >
+                    {classes.map(c => (
+                        <option key={c._id} value={c._id}>{c.className} - {c.subject}</option>
+                    ))}
+                    {classes.length === 0 && <option value="">No classes found</option>}
+                </select>
+            </div>
+            
+            {/* Start New Lecture - Only show if no active lectures for SELECTED class */}
             {activeLectures.length === 0 && (
                 <div style={{ 
                     marginBottom: "30px", 
@@ -225,14 +268,14 @@ const LectureManagement = () => {
                     </div>
                     <button
                         onClick={startLecture}
-                        disabled={loading || !formData.title.trim()}
+                        disabled={loading || !formData.title.trim() || !formData.classId}
                         style={{
                             padding: "12px 24px",
-                            backgroundColor: loading ? "#ccc" : "#22c55e",
+                            backgroundColor: (loading || !formData.classId) ? "#ccc" : "#22c55e",
                             color: "white",
                             border: "none",
                             borderRadius: "4px",
-                            cursor: loading ? "not-allowed" : "pointer"
+                            cursor: (loading || !formData.classId) ? "not-allowed" : "pointer"
                         }}
                     >
                         {loading ? "Starting..." : "🚀 Start Lecture (50 min)"}
@@ -250,7 +293,7 @@ const LectureManagement = () => {
                 }}>
                     <h4>⚠️ Other Teachers' Active Lectures</h4>
                     <p style={{ color: "#fca5a5", marginBottom: "15px" }}>
-                        Cannot start new lecture while other teachers are conducting classes
+                        Active lectures in this system:
                     </p>
                     {otherTeacherLectures.map((lecture) => (
                         <div key={lecture._id} style={{ 
@@ -261,7 +304,7 @@ const LectureManagement = () => {
                         }}>
                             <strong>👨‍🏫 {lecture.teacher.name}</strong>
                             <br />
-                            📚 {lecture.title}
+                            📚 {lecture.title} ({lecture.classId})
                             <br />
                             <small style={{ color: "#fca5a5" }}>
                                 Started: {new Date(lecture.startTime).toLocaleTimeString()}
@@ -271,7 +314,7 @@ const LectureManagement = () => {
                 </div>
             )}
 
-            {/* Active Lectures */}
+            {/* Active Lectures for Selected Class */}
             {activeLectures.length > 0 && (
                 <div style={{ 
                     marginBottom: "30px", 
@@ -279,7 +322,7 @@ const LectureManagement = () => {
                     backgroundColor: "#065f46", 
                     borderRadius: "8px" 
                 }}>
-                    <h4>🟢 Active Lectures</h4>
+                    <h4>🟢 Active Lecture for {classes.find(c => c._id === formData.classId)?.className}</h4>
                     {activeLectures.map((lecture) => (
                         <div key={lecture.id} style={{ 
                             marginTop: "10px", 

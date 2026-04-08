@@ -1,16 +1,11 @@
 import { useState } from "react";
 import axios from "axios";
 
-const QRScanner = () => {
+const QRScanner = ({ classId: propClassId, lectureId: propLectureId }) => {
     const [qrText, setQrText] = useState("");
     const [loading, setLoading] = useState(false);
 
     const handleScan = async () => {
-        if (!qrText.trim()) {
-            alert("Please enter QR data");
-            return;
-        }
-
         const userId = localStorage.getItem("userId");
         if (!userId) {
             alert("User not logged in. Please login again.");
@@ -20,25 +15,38 @@ const QRScanner = () => {
         setLoading(true);
         
         try{
-            let parsedData;
+            let finalClassId = propClassId;
+            let finalLectureId = propLectureId;
 
-            try{
-                parsedData = JSON.parse(qrText);
-            } catch {
-                parsedData = { classId: qrText.trim() };
+            // If text is provided, try to parse it (fallback for manual entry)
+            if (qrText.trim()) {
+                try {
+                    const parsedData = JSON.parse(qrText);
+                    finalClassId = parsedData.classId || finalClassId;
+                    finalLectureId = parsedData.lectureId || finalLectureId;
+                } catch {
+                    // Not JSON, assume it's just a classId
+                    finalClassId = qrText.trim() || finalClassId;
+                }
             }
 
-            if (!parsedData.classId) {
-                throw new Error("Invalid QR data - missing class ID");
+            if (!finalClassId) {
+                throw new Error("Missing class ID for attendance");
             }
             
             const res = await axios.post("http://localhost:5000/api/qr/scan", {
-                classId: parsedData.classId,
+                classId: finalClassId,
+                lectureId: finalLectureId,
                 studentId: userId
             });
 
             alert(res.data.message || "Attendance marked successfully");
             setQrText(""); // Clear input after successful scan
+            
+            // Refresh dashboard
+            window.dispatchEvent(new CustomEvent('attendanceMarked', { 
+                detail: { message: 'Attendance marked successfully' }
+            }));
             
         } catch (error) {
             console.log("QR Scan Error:", error);

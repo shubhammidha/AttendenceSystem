@@ -1,18 +1,37 @@
 import { useState, useRef, useEffect } from "react";
 import axios from "axios";
+import * as faceapi from "@vladmandic/face-api";
 
 const FaceRegister = () => {
     const [isStreaming, setIsStreaming] = useState(false);
     const [capturedImage, setCapturedImage] = useState("");
     const [loading, setLoading] = useState(false);
+    const [modelsLoaded, setModelsLoaded] = useState(false);
     const [faceStatus, setFaceStatus] = useState(null);
-    const [debugCount, setDebugCount] = useState(0); // Add debug counter
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
 
     const userId = localStorage.getItem("userId");
 
+    // Load models on mount
     useEffect(() => {
+        const loadModels = async () => {
+            const MODEL_URL = "https://vladmandic.github.io/face-api/model/";
+            try {
+                console.log("Loading face-api models...");
+                await Promise.all([
+                    faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+                ]);
+                console.log("Models loaded successfully");
+                setModelsLoaded(true);
+            } catch (error) {
+                console.log("Error loading models:", error);
+                alert("Failed to load AI models. Check your internet connection.");
+            }
+        };
+        loadModels();
         checkFaceStatus();
     }, []);
 
@@ -27,44 +46,21 @@ const FaceRegister = () => {
 
     const startCamera = async () => {
         try {
-            console.log("Starting camera...");
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: true 
-            });
-            
-            console.log("Got stream:", stream);
-            
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
             if (videoRef.current) {
-                console.log("videoRef.current exists, setting srcObject");
                 videoRef.current.srcObject = stream;
-                console.log("Set srcObject");
-                
-                // Force state change immediately
-                console.log("Force setting isStreaming to TRUE");
                 setIsStreaming(true);
-                setDebugCount(prev => prev + 1);
-                
-                // Try to play video (but don't wait for it)
-                videoRef.current.play().then(() => {
-                    console.log("Video playing successfully");
-                }).catch(err => {
-                    console.log("Video play error (but state already set):", err);
-                });
-            } else {
-                console.log("ERROR: videoRef.current is null!");
-                console.log("videoRef:", videoRef);
             }
         } catch (error) {
             console.log("Camera access error:", error);
-            alert("Unable to access camera. Please check permissions.");
+            alert("Unable to access camera.");
         }
     };
 
     const stopCamera = () => {
         if (videoRef.current && videoRef.current.srcObject) {
             const stream = videoRef.current.srcObject;
-            const tracks = stream.getTracks();
-            tracks.forEach(track => track.stop());
+            stream.getTracks().forEach(track => track.stop());
             videoRef.current.srcObject = null;
             setIsStreaming(false);
         }
@@ -74,57 +70,48 @@ const FaceRegister = () => {
         if (videoRef.current && canvasRef.current) {
             const video = videoRef.current;
             const canvas = canvasRef.current;
-            const context = canvas.getContext('2d');
-            
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0);
-            
-            const imageData = canvas.toDataURL('image/jpeg');
-            setCapturedImage(imageData);
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            setCapturedImage(canvas.toDataURL('image/jpeg'));
             stopCamera();
         }
     };
 
     const registerFace = async () => {
-        if (!capturedImage) {
-            alert("Please capture your face first");
-            return;
-        }
+        if (!capturedImage) return alert("Capture face first");
+        if (!modelsLoaded) return alert("AI Models still loading...");
 
         setLoading(true);
-        
         try {
-            // Create a DETERMINISTIC 128-float descriptor for this user (simulated)
-            // This ensures that the "registered" face matches the "attendance" face for testing
-            const generateSimulatedDescriptor = (id) => {
-                const seed = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-                return Array.from({ length: 128 }, (_, i) => {
-                    const val = Math.sin(seed + i) * 0.5 + 0.5; // Values between 0 and 1
-                    return val;
-                });
-            };
+            // Real AI Processing
+            const img = await faceapi.fetchImage(capturedImage);
+            const detection = await faceapi.detectSingleFace(img)
+                .withFaceLandmarks()
+                .withFaceDescriptor();
 
-            const simulatedDescriptor = generateSimulatedDescriptor(userId);
+            if (!detection) {
+                setLoading(false);
+                return alert("❌ No face detected. Please try again with better lighting.");
+            }
 
-            const faceData = {
-                descriptor: simulatedDescriptor,
-                image: capturedImage,
-                userId: userId
-            };
+            // Convert Float32Array to regular Array for JSON transfer
+            const descriptorArray = Array.from(detection.descriptor);
 
             const res = await axios.post("http://localhost:5000/api/face/register", {
-                userId: userId,
-                faceData: faceData
+                userId,
+                faceData: {
+                    descriptor: descriptorArray,
+                    image: capturedImage
+                }
             });
 
-            alert(res.data.message);
+            alert("✅ " + res.data.message);
             setCapturedImage("");
             checkFaceStatus();
-            
         } catch (error) {
-            console.log("Face registration error:", error);
-            alert("Face registration failed: " + (error.response?.data?.message || error.message));
+            console.log("Registration error:", error);
+            alert("Failed: " + (error.response?.data?.message || error.message));
         } finally {
             setLoading(false);
         }
@@ -138,11 +125,6 @@ const FaceRegister = () => {
     return (
         <div style={{ marginTop: "40px", textAlign: "center" }}>
             <h2>Face Registration</h2>
-            
-            {/* Debug: Show streaming state */}
-            <p style={{ color: "#ccc", fontSize: "12px" }}>
-                Debug: isStreaming = {isStreaming ? "TRUE" : "FALSE"} (render: {debugCount})
-            </p>
             
             {/* Always render video element but hide it when not streaming */}
             <video

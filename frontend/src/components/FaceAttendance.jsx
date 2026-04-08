@@ -1,19 +1,38 @@
 import { useState, useRef, useEffect } from "react";
 import axios from "axios";
+import * as faceapi from "@vladmandic/face-api";
 
-const FaceAttendance = () => {
+const FaceAttendance = ({ classId, lectureId }) => {
     const [isStreaming, setIsStreaming] = useState(false);
     const [capturedImage, setCapturedImage] = useState("");
     const [loading, setLoading] = useState(false);
-    const [classId, setClassId] = useState("69c188592fda59eb47432e5c");
+    const [modelsLoaded, setModelsLoaded] = useState(false);
     const [attendanceResult, setAttendanceResult] = useState(null);
-    const [debugCount, setDebugCount] = useState(0);
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
 
     const userId = localStorage.getItem("userId");
 
-    // Function to refresh dashboard stats
+    // Load models on mount
+    useEffect(() => {
+        const loadModels = async () => {
+            const MODEL_URL = "https://vladmandic.github.io/face-api/model/";
+            try {
+                console.log("Loading face-api models for attendance...");
+                await Promise.all([
+                    faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+                ]);
+                console.log("Models loaded successfully");
+                setModelsLoaded(true);
+            } catch (error) {
+                console.log("Error loading models:", error);
+            }
+        };
+        loadModels();
+    }, []);
+
     const refreshDashboardStats = () => {
         window.dispatchEvent(new CustomEvent('attendanceMarked', { 
             detail: { message: 'Attendance marked successfully' }
@@ -22,8 +41,6 @@ const FaceAttendance = () => {
 
     const startCamera = async () => {
         try {
-            console.log("Starting camera for attendance...");
-            
             // First check if attendance is already marked
             const attendanceCheckRes = await axios.get(
                 `http://localhost:5000/api/attendance/check/${userId}/${classId}`
@@ -34,65 +51,31 @@ const FaceAttendance = () => {
                 return;
             }
 
-            // Check if attendance method is selected for this lecture
-            console.log("Checking attendance method for classId:", classId);
-            console.log("Making API call to: http://localhost:5000/api/attendance-method/active/" + classId);
+            // Check if attendance method is selected
             const methodCheckRes = await axios.get(
                 `http://localhost:5000/api/attendance-method/active/${classId}`
             );
             
-            console.log("Method check response:", methodCheckRes.data);
-            console.log("Method check response type:", typeof methodCheckRes.data);
-            console.log("Active method from response:", methodCheckRes.data.activeMethod);
-            
             if (!methodCheckRes.data.activeMethod || methodCheckRes.data.activeMethod === "none") {
-                alert("⚠️ Teacher has not selected an attendance method yet. Please wait for teacher to select a method.");
+                alert("⚠️ Teacher has not selected an attendance method yet.");
                 return;
             }
             
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: true 
-            });
-            
-            console.log("Got stream:", stream);
-            
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
             if (videoRef.current) {
                 videoRef.current.srcObject = stream;
-                console.log("Set srcObject for attendance");
-                
-                // Force state change immediately
-                console.log("Force setting isStreaming to TRUE for attendance");
                 setIsStreaming(true);
-                setDebugCount(prev => prev + 1);
-                
-                // Try to play video
-                videoRef.current.play().then(() => {
-                    console.log("Video playing successfully for attendance");
-                }).catch(err => {
-                    console.log("Video play error for attendance:", err);
-                });
-            } else {
-                console.log("ERROR: videoRef.current is null for attendance!");
             }
         } catch (error) {
-            console.log("Camera access error for attendance:", error);
-            console.log("Error status:", error.response?.status);
-            console.log("Error message:", error.response?.data?.message);
-            console.log("Error includes 'already marked':", error.response?.data?.message?.includes("already marked"));
-            
-            if (error.response?.status === 400 && error.response?.data?.message?.includes("already marked")) {
-                alert("✅ Attendance is already marked for today!");
-            } else {
-                alert("Unable to access camera. Please check permissions.");
-            }
+            console.log("Camera error:", error);
+            alert("Unable to access camera.");
         }
     };
 
     const stopCamera = () => {
         if (videoRef.current && videoRef.current.srcObject) {
             const stream = videoRef.current.srcObject;
-            const tracks = stream.getTracks();
-            tracks.forEach(track => track.stop());
+            stream.getTracks().forEach(track => track.stop());
             videoRef.current.srcObject = null;
             setIsStreaming(false);
         }
@@ -102,78 +85,55 @@ const FaceAttendance = () => {
         if (videoRef.current && canvasRef.current) {
             const video = videoRef.current;
             const canvas = canvasRef.current;
-            const context = canvas.getContext('2d');
-            
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0);
-            
-            const imageData = canvas.toDataURL('image/jpeg');
-            setCapturedImage(imageData);
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            setCapturedImage(canvas.toDataURL('image/jpeg'));
             stopCamera();
         }
     };
 
     const markAttendance = async () => {
-        if (!userId) {
-            alert("❌ User session not found. Please log in again.");
-            return;
-        }
-
-        if (!capturedImage) {
-            alert("Please capture your face first");
-            return;
-        }
-
-        if (!classId) {
-            alert("Please enter class ID");
-            return;
-        }
+        if (!userId) return alert("❌ Session not found. Log in again.");
+        if (!capturedImage) return alert("Capture face first");
+        if (!modelsLoaded) return alert("AI Models loading...");
 
         setLoading(true);
         setAttendanceResult(null);
         
         try {
-            // Generate a DETERMINISTIC descriptor based on userId
-            const generateSimulatedDescriptor = (id) => {
-                const seed = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-                return Array.from({ length: 128 }, (_, i) => {
-                    const val = Math.sin(seed + i) * 0.5 + 0.5;
-                    return val;
-                });
-            };
+            // Real AI Processing for Attendance
+            const img = await faceapi.fetchImage(capturedImage);
+            const detection = await faceapi.detectSingleFace(img)
+                .withFaceLandmarks()
+                .withFaceDescriptor();
 
-            const baseDescriptor = generateSimulatedDescriptor(userId);
-            
-            // Add a tiny bit of "noise" to simulate real-world camera variance
-            const simulatedDescriptor = baseDescriptor.map(val => 
-                val + (Math.random() * 0.02 - 0.01)
-            );
+            if (!detection) {
+                setLoading(false);
+                return alert("❌ Face not detected in capture. Please retake photo.");
+            }
 
-            const faceData = {
-                descriptor: simulatedDescriptor,
-                image: capturedImage
-            };
+            const descriptorArray = Array.from(detection.descriptor);
 
             const res = await axios.post("http://localhost:5000/api/face/mark-attendance", {
-                userId: userId,
-                classId: classId,
-                faceData: faceData
+                userId,
+                classId,
+                lectureId,
+                faceData: {
+                    descriptor: descriptorArray,
+                    image: capturedImage
+                }
             });
 
             setAttendanceResult(res.data);
             alert("✅ " + res.data.message);
             setCapturedImage("");
-            
-            // Refresh dashboard stats
             refreshDashboardStats();
             
         } catch (error) {
-            console.log("Face attendance error:", error);
+            console.log("Attendance error:", error);
             const errorMsg = error.response?.data?.message || error.message;
-            const distance = error.response?.data?.distance;
-            
-            setAttendanceResult({ error: errorMsg, distance });
+            setAttendanceResult({ error: errorMsg });
             alert("❌ " + errorMsg);
         } finally {
             setLoading(false);
@@ -189,28 +149,6 @@ const FaceAttendance = () => {
     return (
         <div style={{ marginTop: "40px", textAlign: "center" }}>
             <h3>Mark Attendance via Face</h3>
-            
-            {/* Debug: Show streaming state */}
-            <p style={{ color: "#ccc", fontSize: "12px" }}>
-                Debug: isStreaming = {isStreaming ? "TRUE" : "FALSE"} (render: {debugCount})
-            </p>
-
-            {/* Class ID Input */}
-            <div style={{ marginBottom: "20px" }}>
-                <input
-                    type="text"
-                    placeholder="Enter Class ID"
-                    value={classId}
-                    onChange={(e) => setClassId(e.target.value)}
-                    style={{
-                        padding: "8px 12px",
-                        borderRadius: "4px",
-                        border: "1px solid #ccc",
-                        marginRight: "10px",
-                        width: "200px"
-                    }}
-                />
-            </div>
             
             {/* Always render video element but hide it when not streaming */}
             <video

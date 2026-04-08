@@ -9,6 +9,10 @@ const classSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  code: {
+    type: String,
+    unique: true
+  },
   teacher: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User"

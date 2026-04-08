@@ -32,33 +32,103 @@ import axios from "axios";
 
 const TeacherAttendanceOptions = () => {
     const [activeLectures, setActiveLectures] = useState([]);
+    const [classes, setClasses] = useState([]);
+    const [selectedClassId, setSelectedClassId] = useState("");
     const [selectedMethod, setSelectedMethod] = useState("");
     const [qrData, setQrData] = useState("");
     const [loading, setLoading] = useState(false);
+    const [students, setStudents] = useState([]);
+    const [attendanceMap, setAttendanceMap] = useState({}); // {studentId: status}
 
-    const classId = "69c188592fda59eb47432e5c"; // Default class ID
+    useEffect(() => {
+        fetchTeacherClasses();
+    }, []);
+
+    const fetchTeacherClasses = async () => {
+        try {
+            const token = localStorage.getItem("token");
+            const res = await axios.get("http://localhost:5000/api/class/teacher", {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setClasses(res.data);
+            if (res.data.length > 0) {
+                setSelectedClassId(res.data[0]._id);
+            }
+        } catch (error) {
+            console.log("Error fetching teacher classes:", error);
+        }
+    };
 
     const fetchActiveLectures = async () => {
+        if (!selectedClassId) return;
         try {
-            console.log("TeacherDashboard: Fetching active lectures...");
             const res = await axios.get(
-                `http://localhost:5000/api/lecture/active/${classId}`
+                `http://localhost:5000/api/lecture/active/${selectedClassId}`
             );
-            console.log("TeacherDashboard: Active lectures response:", res.data);
             setActiveLectures(res.data.activeLectures);
             
-            // Only set selected method if it's not already set OR if it's different
             if (res.data.activeLectures.length > 0) {
                 const activeLecture = res.data.activeLectures[0];
                 const method = activeLecture.attendanceMethod || "";
-                console.log("TeacherDashboard: Auto-setting selected method from API:", method);
                 setSelectedMethod(method);
+                
+                // If manual method, fetch students and current attendance
+                if (method === "manual") {
+                    fetchManualAttendanceData(activeLecture.id);
+                }
             } else {
-                console.log("TeacherDashboard: No active lectures");
                 setSelectedMethod("");
+                setStudents([]);
+                setAttendanceMap({});
             }
         } catch (error) {
             console.log("Error fetching active lectures:", error);
+        }
+    };
+
+    const fetchManualAttendanceData = async (lectureId) => {
+        try {
+            const token = localStorage.getItem("token");
+            // 1. Fetch all students in class
+            const studentsRes = await axios.get(`http://localhost:5000/api/class/${selectedClassId}/students`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setStudents(studentsRes.data);
+
+            // 2. Fetch existing attendance for this lecture
+            const attendanceRes = await axios.get(`http://localhost:5000/api/attendance/lecture/${lectureId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            
+            const map = {};
+            attendanceRes.data.forEach(rec => {
+                map[rec.student._id] = rec.status;
+            });
+            setAttendanceMap(map);
+        } catch (error) {
+            console.log("Error fetching manual attendance data:", error);
+        }
+    };
+
+    const toggleAttendance = async (studentId, currentStatus) => {
+        const newStatus = currentStatus === "present" ? "absent" : "present";
+        const lectureId = activeLectures[0].id;
+
+        try {
+            const token = localStorage.getItem("token");
+            await axios.post("http://localhost:5000/api/attendance/mark", {
+                studentId,
+                classId: selectedClassId,
+                lectureId,
+                status: newStatus,
+                method: "manual"
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            setAttendanceMap(prev => ({ ...prev, [studentId]: newStatus }));
+        } catch (error) {
+            alert("Failed to update attendance");
         }
     };
 
@@ -66,7 +136,6 @@ const TeacherAttendanceOptions = () => {
         fetchActiveLectures();
         const interval = setInterval(fetchActiveLectures, 10000);
         
-        // Listen for lecture ended events
         const handleLectureEnded = () => {
             fetchActiveLectures();
         };
@@ -77,7 +146,7 @@ const TeacherAttendanceOptions = () => {
             clearInterval(interval);
             window.removeEventListener('lectureEnded', handleLectureEnded);
         };
-    }, []); // Remove dependency to prevent infinite loop
+    }, [selectedClassId]);
 
     const generateQRForLecture = async (lectureId) => {
         setLoading(true);
@@ -190,6 +259,27 @@ const TeacherAttendanceOptions = () => {
         <div style={{ padding: "20px", backgroundColor: "#1e293b", borderRadius: "8px" }}>
             <h3>📋 Attendance Options</h3>
             
+            {/* Class Selection */}
+            <div style={{ marginBottom: "20px", display: "flex", justifyContent: "center", gap: "10px", alignItems: "center" }}>
+                <span>Selected Class:</span>
+                <select 
+                    value={selectedClassId}
+                    onChange={(e) => setSelectedClassId(e.target.value)}
+                    style={{
+                        padding: "8px",
+                        borderRadius: "4px",
+                        backgroundColor: "#334155",
+                        color: "white",
+                        border: "1px solid #475569"
+                    }}
+                >
+                    {classes.map(c => (
+                        <option key={c._id} value={c._id}>{c.className} - {c.subject}</option>
+                    ))}
+                    {classes.length === 0 && <option value="">No classes found</option>}
+                </select>
+            </div>
+            
             {/* Debug Info */}
             <div style={{ 
                 padding: "10px", 
@@ -284,8 +374,50 @@ const TeacherAttendanceOptions = () => {
                     
                     {selectedMethod === "manual" && (
                         <div>
-                            <p>Manual attendance interface would go here.</p>
-                            <p>Teachers can mark students as present/absent manually.</p>
+                            <p>Manual attendance interface:</p>
+                            <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "20px" }}>
+                                <thead>
+                                    <tr style={{ backgroundColor: "#334155" }}>
+                                        <th style={{ padding: "10px", textAlign: "left" }}>Student Name</th>
+                                        <th style={{ padding: "10px", textAlign: "left" }}>Email</th>
+                                        <th style={{ padding: "10px", textAlign: "center" }}>Status</th>
+                                        <th style={{ padding: "10px", textAlign: "center" }}>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {students.map(student => (
+                                        <tr key={student._id} style={{ borderBottom: "1px solid #334155" }}>
+                                            <td style={{ padding: "10px" }}>{student.name}</td>
+                                            <td style={{ padding: "10px" }}>{student.email}</td>
+                                            <td style={{ padding: "10px", textAlign: "center" }}>
+                                                <span style={{ 
+                                                    padding: "4px 8px", 
+                                                    borderRadius: "4px",
+                                                    backgroundColor: attendanceMap[student._id] === "present" ? "#166534" : "#991b1b"
+                                                }}>
+                                                    {attendanceMap[student._id] || "absent"}
+                                                </span>
+                                            </td>
+                                            <td style={{ padding: "10px", textAlign: "center" }}>
+                                                <button 
+                                                    onClick={() => toggleAttendance(student._id, attendanceMap[student._id] || "absent")}
+                                                    style={{
+                                                        padding: "6px 12px",
+                                                        backgroundColor: "#2563eb",
+                                                        color: "white",
+                                                        border: "none",
+                                                        borderRadius: "4px",
+                                                        cursor: "pointer"
+                                                    }}
+                                                >
+                                                    Toggle
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            {students.length === 0 && <p style={{ textAlign: "center", marginTop: "20px" }}>No students enrolled in this class.</p>}
                         </div>
                     )}
 
