@@ -23,7 +23,7 @@
 const express = require("express");
 const router = express.Router();
 
-const { startLecture, getActiveLectures, endLecture, getTeacherLectures, getLectureHistory, getAllActiveLectures } = require("../controllers/lectureController");
+const { startLecture, getActiveLectures, endLecture, getTeacherLectures, getLectureHistory, getAllActiveLectures, getTeacherActiveLectures } = require("../controllers/lectureController");
 const authMiddleware = require("../middleware/auth");
 
 // Middleware to verify teacher role for lecture operations
@@ -37,6 +37,9 @@ const verifyTeacher = (req, res, next) => {
 
 // Start lecture (teacher only)
 router.post("/start", authMiddleware, verifyTeacher, startLecture);
+
+// Get teacher's own active lectures (new endpoint)
+router.get("/teacher-active", authMiddleware, verifyTeacher, getTeacherActiveLectures);
 
 // Get active lectures for a class (no auth required for demo)
 router.get("/active/:classId", getActiveLectures);

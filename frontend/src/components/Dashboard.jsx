@@ -22,25 +22,15 @@ const Dashboard = () => {
   const userId = localStorage.getItem("userId");
 
   useEffect(() => {
-    console.log("=== DASHBOARD COMPONENT MOUNTING ===");
-    console.log("Current userRole:", userRole);
-    console.log("Current stats:", stats);
-    console.log("localStorage userId:", localStorage.getItem("userId"));
-    console.log("localStorage userRole:", localStorage.getItem("userRole"));
-    
     fetchStats();
     // Get role from localStorage (saved during login)
     const savedRole = localStorage.getItem("userRole");
     if (savedRole) {
       setUserRole(savedRole);
-      console.log("User role from localStorage:", savedRole);
-    } else {
-      console.log("No role found, defaulting to student");
     }
 
     // Listen for attendance marked events
     const handleAttendanceMarked = () => {
-      console.log("Attendance marked, refreshing stats...");
       fetchStats();
     };
 
@@ -55,15 +45,10 @@ const Dashboard = () => {
     try {
       const userId = localStorage.getItem("userId");
 
-      console.log("=== DASHBOARD FETCHING STATS ===");
-      console.log("UserId from localStorage:", userId);
-
       if(!userId){
-        console.log("No userId found in localStorage");
         return;
       }
 
-      console.log("Making API call to: http://localhost:5000/api/attendance/stats");
       const token = localStorage.getItem("token");
       const res = await axios.get(
         `http://localhost:5000/api/attendance/stats`,
@@ -74,9 +59,7 @@ const Dashboard = () => {
         }
       );
       
-      console.log("Stats API response:", res.data);
       setStats(res.data);
-      console.log("Stats set to state:", res.data);
     } catch (error) {
       console.log("Error fetching stats:", error);
     }

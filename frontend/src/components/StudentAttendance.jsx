@@ -84,7 +84,9 @@ const StudentAttendance = () => {
                         title: res.data.lectureTitle,
                         id: res.data.lectureId,
                         classId: cls._id,
-                        className: cls.className
+                        className: cls.className,
+                        subject: cls.subject,
+                        teacherName: res.data.teacherName
                     });
                     setLoading(false);
                     return; // Found an active lecture, stop searching
@@ -138,7 +140,20 @@ const StudentAttendance = () => {
 
     return (
         <div style={{ marginTop: "40px", textAlign: "center" }}>
-            <h3>📋 Attendance for: {lectureInfo.title}</h3>
+            <div style={{ 
+                marginBottom: "20px",
+                padding: "15px",
+                backgroundColor: "#1e293b",
+                borderRadius: "8px",
+                border: "1px solid #334155"
+            }}>
+                <h3 style={{ margin: "0 0 10px 0" }}>📋 Attendance for: {lectureInfo.title}</h3>
+                <div style={{ display: "flex", justifyContent: "center", gap: "20px", fontSize: "14px", color: "#94a3b8" }}>
+                    <span>👨‍🏫 <strong>Professor:</strong> {lectureInfo.teacherName}</span>
+                    <span>📚 <strong>Subject:</strong> {lectureInfo.subject}</span>
+                    <span>🏫 <strong>Class:</strong> {lectureInfo.className}</span>
+                </div>
+            </div>
             
             {/* Active Method Display */}
             <div style={{ 

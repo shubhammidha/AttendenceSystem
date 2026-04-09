@@ -101,10 +101,13 @@ exports.markAttendanceViaFace = async (req, res) => {
         }
 
         // Check if there is an active lecture with face attendance enabled
+        const now = new Date();
         const activeLecture = await Lecture.findOne({
             classId: classId,
             isActive: true,
-            attendanceMethod: "face"
+            attendanceMethod: "face",
+            startTime: { $lte: now },
+            endTime: { $gte: now }
         });
 
         if (!activeLecture) {

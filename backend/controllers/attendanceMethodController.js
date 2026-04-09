@@ -25,15 +25,18 @@ const Lecture = require("../models/Lecture");
 exports.getActiveAttendanceMethod = async (req, res) => {
     try {
         const { classId } = req.params;
+        const now = new Date();
 
         console.log("=== STUDENT REQUEST ===");
         console.log("Getting active method for classId:", classId);
 
-        // Find ALL active lectures for this class (not just one)
+        // Find ALL active lectures for this class that are CURRENTLY ongoing
         const activeLectures = await Lecture.find({
             classId: classId,
-            isActive: true
-        });
+            isActive: true,
+            startTime: { $lte: now },
+            endTime: { $gte: now }
+        }).populate("teacher", "name");
 
         console.log("Found", activeLectures.length, "active lectures for this class:");
         activeLectures.forEach((lecture, index) => {
@@ -42,6 +45,7 @@ exports.getActiveAttendanceMethod = async (req, res) => {
                 title: lecture.title,
                 attendanceMethod: lecture.attendanceMethod,
                 isActive: lecture.isActive,
+                teacher: lecture.teacher?.name,
                 createdAt: lecture.createdAt
             });
         });
@@ -61,13 +65,15 @@ exports.getActiveAttendanceMethod = async (req, res) => {
         console.log("Using most recent lecture:", {
             id: activeLecture._id,
             title: activeLecture.title,
-            attendanceMethod: activeMethod
+            attendanceMethod: activeMethod,
+            teacher: activeLecture.teacher?.name
         });
 
         res.json({ 
             activeMethod,
             lectureId: activeLecture._id,
-            lectureTitle: activeLecture.title
+            lectureTitle: activeLecture.title,
+            teacherName: activeLecture.teacher?.name || "Unknown Teacher"
         });
 
     } catch (error) {

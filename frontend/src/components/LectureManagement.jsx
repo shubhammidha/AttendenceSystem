@@ -142,17 +142,6 @@ const LectureManagement = () => {
             return;
         }
 
-        // Check if current teacher already has an active lecture
-        const currentTeacherActiveLectures = activeLectures.filter(
-            lecture => lecture.teacher._id === userId
-        );
-        
-        if (currentTeacherActiveLectures.length > 0) {
-            const activeTeacher = currentTeacherActiveLectures[0];
-            alert(`⚠️ You already have an active lecture: "${activeTeacher.title}". Please end it first before starting a new one.`);
-            return;
-        }
-
         setLoading(true);
         try {
             const token = localStorage.getItem("token");
@@ -170,6 +159,11 @@ const LectureManagement = () => {
             setFormData({ ...formData, title: "" });
             fetchActiveLectures();
             fetchTeacherLectures();
+            
+            // Trigger update in TeacherAttendanceOptions
+            window.dispatchEvent(new CustomEvent('lectureStarted', { 
+                detail: { classId: formData.classId } 
+            }));
             
         } catch (error) {
             console.log("Start lecture error:", error);
@@ -200,12 +194,14 @@ const LectureManagement = () => {
 
             alert("✅ " + res.data.message);
             fetchTeacherLectures();
-            fetchAllActiveLectures();
             
             // Also refresh the TeacherAttendanceOptions component
             window.dispatchEvent(new CustomEvent('lectureEnded', { 
                 detail: { lectureId: lectureId } 
             }));
+            
+            // Immediate refresh for this component
+            fetchActiveLectures();
             
         } catch (error) {
             console.log("End lecture error:", error);
@@ -280,37 +276,6 @@ const LectureManagement = () => {
                     >
                         {loading ? "Starting..." : "🚀 Start Lecture (50 min)"}
                     </button>
-                </div>
-            )}
-
-            {/* Other Teachers' Active Lectures */}
-            {otherTeacherLectures.length > 0 && (
-                <div style={{ 
-                    marginBottom: "30px", 
-                    padding: "20px", 
-                    backgroundColor: "#dc2626", 
-                    borderRadius: "8px" 
-                }}>
-                    <h4>⚠️ Other Teachers' Active Lectures</h4>
-                    <p style={{ color: "#fca5a5", marginBottom: "15px" }}>
-                        Active lectures in this system:
-                    </p>
-                    {otherTeacherLectures.map((lecture) => (
-                        <div key={lecture._id} style={{ 
-                            marginTop: "10px", 
-                            padding: "10px", 
-                            backgroundColor: "#991b1b", 
-                            borderRadius: "4px" 
-                        }}>
-                            <strong>👨‍🏫 {lecture.teacher.name}</strong>
-                            <br />
-                            📚 {lecture.title} ({lecture.classId})
-                            <br />
-                            <small style={{ color: "#fca5a5" }}>
-                                Started: {new Date(lecture.startTime).toLocaleTimeString()}
-                            </small>
-                        </div>
-                    ))}
                 </div>
             )}
 

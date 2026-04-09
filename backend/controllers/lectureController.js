@@ -160,6 +160,27 @@ exports.getTeacherLectures = async (req, res) => {
     }
 };
 
+// Get teacher's active lectures
+exports.getTeacherActiveLectures = async (req, res) => {
+    try {
+        const teacherId = req.user.id;
+        const now = new Date();
+
+        const lectures = await Lecture.find({ 
+            teacher: teacherId,
+            isActive: true,
+            startTime: { $lte: now },
+            endTime: { $gte: now }
+        });
+
+        res.json({ activeLectures: lectures });
+
+    } catch (error) {
+        console.log("Get teacher active lectures error:", error);
+        res.status(500).json({ message: "Failed to fetch active lectures" });
+    }
+};
+
 // Get all active lectures (for all teachers)
 exports.getAllActiveLectures = async (req, res) => {
     try {
