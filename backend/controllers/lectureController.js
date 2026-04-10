@@ -29,6 +29,64 @@
 
 const Lecture = require("../models/Lecture");
 const User = require("../models/User");
+const Attendance = require("../models/Attendance");
+const Class = require("../models/Class");
+
+// Helper function to mark absences for a lecture
+const processAbsences = async (lectureId) => {
+    try {
+        const lecture = await Lecture.findById(lectureId);
+        if (!lecture || !lecture.isActive) return;
+
+        // AUTOMATIC ABSENT MARKING for Face or QR
+        if (lecture.attendanceMethod === "face" || lecture.attendanceMethod === "qr") {
+            console.log(`Auto-marking absences for ${lecture.attendanceMethod} lecture: ${lecture.title}`);
+            
+            // 1. Get the class to find all enrolled students
+            const classData = await Class.findById(lecture.classId);
+            
+            if (classData && classData.students && classData.students.length > 0) {
+                // 2. Get students who have already marked attendance (present or absent)
+                const existingAttendance = await Attendance.find({ lecture: lectureId });
+                const markedStudentIds = existingAttendance.map(a => a.student.toString());
+
+                // 3. Identify students who haven't marked attendance
+                const unmarkedStudents = classData.students.filter(
+                    studentId => !markedStudentIds.includes(studentId.toString())
+                );
+
+                if (unmarkedStudents.length > 0) {
+                    console.log(`Marking ${unmarkedStudents.length} students as absent`);
+                    
+                    const absentRecords = unmarkedStudents.map(studentId => ({
+                        student: studentId,
+                        class: lecture.classId,
+                        lecture: lectureId,
+                        status: "absent",
+                        method: lecture.attendanceMethod
+                    }));
+
+                    const savedRecords = await Attendance.insertMany(absentRecords);
+                    
+                    // Add the new records to the lecture's attendanceMarked array
+                    const recordIds = savedRecords.map(r => r._id);
+                    lecture.attendanceMarked.push(...recordIds);
+                }
+            }
+        }
+
+        lecture.isActive = false;
+        // If it was already past endTime, don't update endTime to now, keep original
+        if (lecture.endTime > new Date()) {
+            lecture.endTime = new Date();
+        }
+        await lecture.save();
+        return true;
+    } catch (error) {
+        console.error("Error processing absences:", error);
+        return false;
+    }
+};
 
 // Start a new lecture
 exports.startLecture = async (req, res) => {
@@ -79,22 +137,28 @@ exports.startLecture = async (req, res) => {
 exports.getActiveLectures = async (req, res) => {
     try {
         const { classId } = req.params;
-        
         const now = new Date();
         
+        // AUTO-CLEANUP: Find any "active" lectures that have actually expired and process them
+        const expiredLectures = await Lecture.find({
+            classId: classId,
+            isActive: true,
+            endTime: { $lt: now }
+        });
+
+        if (expiredLectures.length > 0) {
+            console.log(`Auto-cleaning ${expiredLectures.length} expired lectures for class ${classId}`);
+            for (const lecture of expiredLectures) {
+                await processAbsences(lecture._id);
+            }
+        }
+
         const activeLectures = await Lecture.find({
             classId: classId,
             isActive: true,
             startTime: { $lte: now },
             endTime: { $gte: now }
         }).populate('teacher', 'name email');
-
-        console.log("Backend: Found lectures:", activeLectures.map(l => ({
-            id: l._id,
-            title: l.title,
-            attendanceMethod: l.attendanceMethod,
-            allFields: Object.keys(l.toObject())
-        })));
 
         res.json({
             activeLectures: activeLectures.map(lecture => ({
@@ -130,11 +194,18 @@ exports.endLecture = async (req, res) => {
             return res.status(403).json({ message: "You can only end your own lectures" });
         }
 
-        lecture.isActive = false;
-        lecture.endTime = new Date();
-        await lecture.save();
+        // Check if lecture is already ended
+        if (!lecture.isActive) {
+            return res.status(400).json({ message: "Lecture is already ended" });
+        }
 
-        res.json({ message: "Lecture ended successfully" });
+        const success = await processAbsences(lectureId);
+
+        if (success) {
+            res.json({ message: "Lecture ended successfully and absences marked" });
+        } else {
+            res.status(500).json({ message: "Failed to process absences" });
+        }
 
     } catch (error) {
         console.log("End lecture error:", error);
@@ -166,6 +237,19 @@ exports.getTeacherActiveLectures = async (req, res) => {
         const teacherId = req.user.id;
         const now = new Date();
 
+        // AUTO-CLEANUP: Find any "active" lectures that have actually expired
+        const expiredLectures = await Lecture.find({
+            teacher: teacherId,
+            isActive: true,
+            endTime: { $lt: now }
+        });
+
+        if (expiredLectures.length > 0) {
+            for (const lecture of expiredLectures) {
+                await processAbsences(lecture._id);
+            }
+        }
+
         const lectures = await Lecture.find({ 
             teacher: teacherId,
             isActive: true,
@@ -184,6 +268,21 @@ exports.getTeacherActiveLectures = async (req, res) => {
 // Get all active lectures (for all teachers)
 exports.getAllActiveLectures = async (req, res) => {
     try {
+        const now = new Date();
+
+        // AUTO-CLEANUP: Find any "active" lectures that have actually expired
+        const expiredLectures = await Lecture.find({
+            isActive: true,
+            endTime: { $lt: now }
+        });
+
+        if (expiredLectures.length > 0) {
+            console.log(`Auto-cleaning ${expiredLectures.length} total expired lectures...`);
+            for (const lecture of expiredLectures) {
+                await processAbsences(lecture._id);
+            }
+        }
+
         const activeLectures = await Lecture.find({ 
             isActive: true 
         }).populate('teacher', 'name email');
