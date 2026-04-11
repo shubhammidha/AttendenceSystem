@@ -6,7 +6,6 @@ const User = require("./models/User");
 async function resetPassword() {
     try {
         await mongoose.connect(process.env.MONGO_URI);
-        console.log("Connected to MongoDB");
 
         const email = "teacher1@gmail.com";
         const newPassword = "123456";
@@ -23,12 +22,13 @@ async function resetPassword() {
             console.log(`Password reset successfully for: ${email}`);
             console.log(`New password is: ${newPassword}`);
         } else {
-            console.log(`User not found: ${email}`);
+            console.error(`User not found: ${email}`);
         }
 
-        mongoose.connection.close();
     } catch (error) {
         console.error("Error resetting password:", error);
+    } finally {
+        await mongoose.connection.close();
     }
 }
 

@@ -28,10 +28,8 @@ export const useFaceRegistrationStatus = () => {
     const checkFaceRegistrationStatus = async () => {
         try {
             const userId = localStorage.getItem("userId");
-            console.log("Checking face status for userId:", userId);
             
             if (!userId) {
-                console.log("No userId found in localStorage");
                 setLoading(false);
                 return;
             }
@@ -40,13 +38,9 @@ export const useFaceRegistrationStatus = () => {
                 `http://localhost:5000/api/face/status/${userId}`
             );
 
-            console.log("Face status response:", res.data);
             setIsRegistered(res.data.faceRegistered || false);
         } catch (error) {
-            console.log("Error checking face registration status:", error);
-            if (error.response) {
-                console.log("Error response:", error.response.data);
-            }
+            console.error("Error checking face registration status:", error);
             setIsRegistered(false);
         } finally {
             setLoading(false);

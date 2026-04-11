@@ -25,7 +25,7 @@
  * - Provides clear instructions for each method
  */
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import QRScanner from "./QRScanner";
 import FaceRegister from "./FaceRegister";
@@ -39,9 +39,7 @@ const StudentAttendance = () => {
     const [studentClasses, setStudentClasses] = useState([]);
     const { isRegistered, loading: faceLoading } = useFaceRegistrationStatus();
 
-    // Function to refresh dashboard stats
     const refreshDashboardStats = () => {
-        // This will be called by parent Dashboard component
         window.dispatchEvent(new CustomEvent('attendanceMarked', { 
             detail: { message: 'Attendance marked successfully' }
         }));

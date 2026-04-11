@@ -11,7 +11,7 @@
  * - Real-time attendance tracking
  */
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 
 const TeacherAttendanceOptions = () => {
@@ -20,7 +20,7 @@ const TeacherAttendanceOptions = () => {
     const [qrData, setQrData] = useState("");
     const [loading, setLoading] = useState(false);
     const [students, setStudents] = useState([]);
-    const [attendanceMap, setAttendanceMap] = useState({}); // {studentId: status}
+    const [attendanceMap, setAttendanceMap] = useState({});
 
     const fetchActiveLectures = async () => {
         try {
@@ -36,7 +36,6 @@ const TeacherAttendanceOptions = () => {
             setActiveLectures(lectures);
             
             if (lectures.length > 0) {
-                // For simplicity, we track method for the first lecture
                 const activeLecture = lectures[0];
                 const method = activeLecture.attendanceMethod || "";
                 setSelectedMethod(method);
@@ -50,7 +49,7 @@ const TeacherAttendanceOptions = () => {
                 setAttendanceMap({});
             }
         } catch (error) {
-            console.log("Error fetching active lectures:", error);
+            console.error("Error fetching active lectures:", error);
         }
     };
 

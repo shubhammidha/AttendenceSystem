@@ -5,7 +5,6 @@ const User = require("./models/User");
 async function checkUsers() {
     try {
         await mongoose.connect(process.env.MONGO_URI);
-        console.log("Connected to MongoDB");
 
         const teachers = await User.find({ role: "teacher" });
         const students = await User.find({ role: "student" });
@@ -16,9 +15,10 @@ async function checkUsers() {
         console.log("\n--- STUDENTS ---");
         students.forEach(s => console.log(`ID: ${s._id} | Name: ${s.name} | Email: ${s.email}`));
 
-        mongoose.connection.close();
     } catch (error) {
-        console.error("Error:", error);
+        console.error("Error checking users:", error);
+    } finally {
+        await mongoose.connection.close();
     }
 }
 

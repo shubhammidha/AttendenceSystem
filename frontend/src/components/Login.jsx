@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import {useState} from "react";
 import axios from "axios";
 
 const Login = ({ setIsLoggedIn, setIsRegistered }) => {
@@ -21,25 +21,17 @@ const Login = ({ setIsLoggedIn, setIsRegistered }) => {
                 form
             );
 
-            console.log("FULL RESPONSE:", res.data);
-            console.log("USER:", res.data.user);
-            console.log("USER ID:", res.data.user?._id);
-            console.log("USER ROLE:", res.data.user?.role);
-
             localStorage.setItem("token", res.data.token);
 
             if (res.data.user && res.data.user._id) {
               localStorage.setItem("userId", res.data.user._id);
               localStorage.setItem("userRole", res.data.user.role || "student"); 
-              console.log("Saved userId:", res.data.user._id);
-              console.log("Saved userRole:", res.data.user.role);
               setIsLoggedIn(true); 
             } else {
-              console.log("User ID missing in response");
               alert("Login failed: Invalid user data");
             }
         } catch (error){
-            console.log(error);
+            console.error(error);
             alert("Login failed: " + (error.response?.data?.message || error.message));
         }
     };

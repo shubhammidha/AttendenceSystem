@@ -33,7 +33,7 @@
  * - Responsive layout with clear visual hierarchy
  */
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 
 const LectureManagement = () => {
@@ -104,11 +104,9 @@ const LectureManagement = () => {
                     }
                 }
             );
-            console.log("Teacher lectures response:", res.data);
             setLectures(res.data.lectures || []);
         } catch (error) {
-            console.log("Error fetching teacher lectures:", error);
-            // Set empty array to prevent undefined errors
+            console.error("Error fetching teacher lectures:", error);
             setLectures([]);
         }
     };

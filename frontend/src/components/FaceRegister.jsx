@@ -13,21 +13,18 @@ const FaceRegister = () => {
 
     const userId = localStorage.getItem("userId");
 
-    // Load models on mount
     useEffect(() => {
         const loadModels = async () => {
             const MODEL_URL = "https://vladmandic.github.io/face-api/model/";
             try {
-                console.log("Loading face-api models...");
                 await Promise.all([
                     faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
                     faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
                     faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
                 ]);
-                console.log("Models loaded successfully");
                 setModelsLoaded(true);
             } catch (error) {
-                console.log("Error loading models:", error);
+                console.error("Error loading models:", error);
                 alert("Failed to load AI models. Check your internet connection.");
             }
         };

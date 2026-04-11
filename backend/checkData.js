@@ -6,7 +6,6 @@ const Class = require("./models/Class");
 async function checkData() {
     try {
         await mongoose.connect(process.env.MONGO_URI);
-        console.log("Connected to MongoDB");
 
         const teachers = await User.find({ role: "teacher" });
         const students = await User.find({ role: "student" });
@@ -24,9 +23,10 @@ async function checkData() {
             console.log(`Students (${c.students.length}): ${c.students.map(s => s.name).join(", ")}`);
         });
 
-        mongoose.connection.close();
     } catch (error) {
-        console.error("Error:", error);
+        console.error("Error checking data:", error);
+    } finally {
+        await mongoose.connection.close();
     }
 }
 

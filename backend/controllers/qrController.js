@@ -1,9 +1,9 @@
 const QRCode = require("qrcode");
 const Attendance = require("../models/Attendance");
+const Lecture = require("../models/Lecture");
 
-let activeQR = {}; // temp storage
+let activeQR = {};
 
-// Generate QR
 exports.generateQR = async (req, res) => {
     try {
         const { classId, lectureId } = req.body;
@@ -17,47 +17,43 @@ exports.generateQR = async (req, res) => {
         const qrString = JSON.stringify(qrData);
         const qrImage = await QRCode.toDataURL(qrString);
 
-        // Store QR temporarily (using lectureId as key for better specificity)
         const key = lectureId || classId;
         activeQR[key] = qrData;
 
-        // Expire in 2 min
         setTimeout(() => {
             delete activeQR[key];
         }, 2 * 60 * 1000);
 
         res.json({ qrImage, qrString });
     } catch (error) {
-        console.log("QR Generate Error:", error);
-        res.status(500).json({ message: error.message });
+        console.error("QR generate error:", error);
+        res.status(500).json({ message: "Failed to generate QR code" });
     }
 };
 
-// Scan QR
 exports.scanQR = async (req, res) => {
     try {
         const { classId, lectureId, studentId } = req.body;
 
-        // Check if QR is active
         const key = lectureId || classId;
         if (!activeQR[key]) {
             return res.status(400).json({ message: "QR code has expired or is invalid" });
         }
 
-        // Check if attendance is already marked for this lecture
         const query = {
             student: studentId,
             class: classId
         };
-        if (lectureId) query.lecture = lectureId;
-        else {
+        
+        if (lectureId) {
+            query.lecture = lectureId;
+        } else {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             query.date = { $gte: today };
         }
 
         const alreadyMarked = await Attendance.findOne(query);
-
         if (alreadyMarked) {
             return res.status(400).json({ message: "Attendance already marked for this session" });
         }
@@ -72,9 +68,7 @@ exports.scanQR = async (req, res) => {
 
         await attendance.save();
 
-        // Update lecture record if lectureId exists
         if (lectureId) {
-            const Lecture = require("../models/Lecture");
             await Lecture.findByIdAndUpdate(lectureId, {
                 $addToSet: { attendanceMarked: attendance._id }
             });
@@ -82,7 +76,7 @@ exports.scanQR = async (req, res) => {
 
         res.json({ message: "Attendance marked successfully via QR" });
     } catch (error) {
-        console.log("QR Scan Error:", error);
-        res.status(500).json({ message: error.message });
+        console.error("QR scan error:", error);
+        res.status(500).json({ message: "Failed to mark attendance via QR" });
     }
 };

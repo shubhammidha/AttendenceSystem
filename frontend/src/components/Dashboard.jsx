@@ -1,10 +1,6 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { PieChart, Pie, Tooltip, Legend, Cell } from "recharts";
-import QRGenerator from "./QRGenerator";
-import QRScanner from "./QRScanner";
-import FaceRegister from "./FaceRegister";
-import FaceAttendance from "./FaceAttendance";
 import LectureManagement from "./LectureManagement";
 import TeacherAttendanceOptions from "./TeacherAttendanceOptions";
 import StudentAttendance from "./StudentAttendance";
@@ -17,19 +13,17 @@ const Dashboard = () => {
     percentage: 0
   });
 
-  const [userRole, setUserRole] = useState("student"); // Get user role
-  const [userName, setUserName] = useState(""); // Get user name
+  const [userRole, setUserRole] = useState("student");
   const userId = localStorage.getItem("userId");
 
   useEffect(() => {
     fetchStats();
-    // Get role from localStorage (saved during login)
+    
     const savedRole = localStorage.getItem("userRole");
     if (savedRole) {
       setUserRole(savedRole);
     }
 
-    // Listen for attendance marked events
     const handleAttendanceMarked = () => {
       fetchStats();
     };
@@ -43,8 +37,6 @@ const Dashboard = () => {
 
   const fetchStats = async () => {
     try {
-      const userId = localStorage.getItem("userId");
-
       if(!userId){
         return;
       }
@@ -61,7 +53,7 @@ const Dashboard = () => {
       
       setStats(res.data);
     } catch (error) {
-      console.log("Error fetching stats:", error);
+      console.error("Error fetching stats:", error);
     }
   };
 
