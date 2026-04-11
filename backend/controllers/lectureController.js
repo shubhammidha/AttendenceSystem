@@ -57,6 +57,24 @@ exports.startLecture = async (req, res) => {
             return res.status(403).json({ message: "Only teachers can start lectures" });
         }
 
+        // Check if teacher already has an active lecture
+        const now = new Date();
+        const activeLecture = await Lecture.findOne({
+            teacher: teacherId,
+            isActive: true,
+            endTime: { $gte: now }
+        });
+
+        if (activeLecture) {
+            return res.status(400).json({ 
+                message: "You already have an active lecture. Please end it before starting a new one.",
+                activeLecture: {
+                    id: activeLecture._id,
+                    title: activeLecture.title
+                }
+            });
+        }
+
         const startTime = new Date();
         const endTime = new Date(startTime.getTime() + (50 * 60 * 1000));
 

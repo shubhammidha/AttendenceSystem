@@ -4,6 +4,7 @@ import { PieChart, Pie, Tooltip, Legend, Cell } from "recharts";
 import LectureManagement from "./LectureManagement";
 import TeacherAttendanceOptions from "./TeacherAttendanceOptions";
 import StudentAttendance from "./StudentAttendance";
+import LectureHistory from "./LectureHistory";
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -14,6 +15,7 @@ const Dashboard = () => {
   });
 
   const [userRole, setUserRole] = useState("student");
+  const [userName, setUserName] = useState("User");
   const userId = localStorage.getItem("userId");
 
   useEffect(() => {
@@ -22,6 +24,11 @@ const Dashboard = () => {
     const savedRole = localStorage.getItem("userRole");
     if (savedRole) {
       setUserRole(savedRole);
+    }
+
+    const savedName = localStorage.getItem("userName");
+    if (savedName) {
+      setUserName(savedName);
     }
 
     const handleAttendanceMarked = () => {
@@ -66,6 +73,7 @@ const Dashboard = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("userId");
     localStorage.removeItem("userRole");
+    localStorage.removeItem("userName");
     window.location.reload(); // Force reload to clear state
   };
 
@@ -87,10 +95,10 @@ const Dashboard = () => {
       }}>
         <div>
           <h1 style={{ textAlign: "left", fontSize: "40px", margin: 0 }}>
-            {userRole === "teacher" ? "Teacher Dashboard" : "Student Dashboard"}
+            Welcome, {userName}
           </h1>
           <p style={{ color: "#94a3b8", margin: "5px 0 0 0" }}>
-            {userRole === "teacher" ? "👨‍🏫" : "👨‍🎓"} {userRole.charAt(0).toUpperCase() + userRole.slice(1)} Portal
+            {userRole === "teacher" ? "👨‍🏫 Teacher" : "👨‍🎓 Student"} Portal
           </p>
         </div>
         <button
@@ -117,6 +125,7 @@ const Dashboard = () => {
         <>
           <LectureManagement />
           <TeacherAttendanceOptions />
+          <LectureHistory />
         </>
       )}
 

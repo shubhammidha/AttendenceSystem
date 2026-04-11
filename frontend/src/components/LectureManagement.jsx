@@ -7,38 +7,15 @@
  * - Start new lectures with title and duration
  * - View currently active lectures with countdown timer
  * - End lectures manually
- * - View lecture history
  * - Real-time updates
- * 
- * State Management:
- * - lectures: Array of teacher's lecture history
- * - activeLectures: Array of currently active lectures
- * - loading: Loading state for API calls
- * - formData: Form data for starting new lecture
- * 
- * API Integration:
- * - POST /api/lecture/start - Start lecture
- * - GET /api/lecture/active/:classId - Get active lectures
- * - PUT /api/lecture/end/:lectureId - End lecture
- * - GET /api/lecture/history - Get lecture history
- * 
- * Usage:
- * - Rendered only for teacher role in Dashboard
- * - Provides complete lecture lifecycle management
- * - Updates in real-time as lectures start/end
- * 
- * Styling:
- * - Professional dark theme
- * - Color-coded sections (green for active, blue for history)
- * - Responsive layout with clear visual hierarchy
  */
 
 import { useState, useEffect } from "react";
 import axios from "axios";
 
 const LectureManagement = () => {
-    const [lectures, setLectures] = useState([]);
     const [activeLectures, setActiveLectures] = useState([]);
+    const [teacherActiveLectures, setTeacherActiveLectures] = useState([]);
     const [classes, setClasses] = useState([]);
     const [otherTeacherLectures, setOtherTeacherLectures] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -51,11 +28,12 @@ const LectureManagement = () => {
 
     useEffect(() => {
         fetchTeacherClasses();
-        fetchTeacherLectures();
+        fetchTeacherActiveLectures();
         fetchAllActiveLectures();
         // Refresh every 30 seconds
         const interval = setInterval(() => {
             fetchAllActiveLectures();
+            fetchTeacherActiveLectures();
         }, 30000);
         return () => clearInterval(interval);
     }, []);
@@ -93,21 +71,21 @@ const LectureManagement = () => {
         }
     };
 
-    const fetchTeacherLectures = async () => {
+    const fetchTeacherActiveLectures = async () => {
         try {
             const token = localStorage.getItem("token");
             const res = await axios.get(
-                "http://localhost:5000/api/lecture/history",
+                "http://localhost:5000/api/lecture/teacher-active",
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
                     }
                 }
             );
-            setLectures(res.data.lectures || []);
+            setTeacherActiveLectures(res.data.activeLectures || []);
         } catch (error) {
-            console.error("Error fetching teacher lectures:", error);
-            setLectures([]);
+            console.error("Error fetching teacher active lectures:", error);
+            setTeacherActiveLectures([]);
         }
     };
 
@@ -140,6 +118,12 @@ const LectureManagement = () => {
             return;
         }
 
+        // Validation: Prevent starting if already has an active lecture
+        if (teacherActiveLectures.length > 0) {
+            alert(`⚠️ You already have an active lecture: "${teacherActiveLectures[0].title}".\nPlease end it before starting a new one.`);
+            return;
+        }
+
         setLoading(true);
         try {
             const token = localStorage.getItem("token");
@@ -156,7 +140,7 @@ const LectureManagement = () => {
             alert("✅ " + res.data.message);
             setFormData({ ...formData, title: "" });
             fetchActiveLectures();
-            fetchTeacherLectures();
+            fetchTeacherActiveLectures();
             
             // Trigger update in TeacherAttendanceOptions
             window.dispatchEvent(new CustomEvent('lectureStarted', { 
@@ -191,7 +175,7 @@ const LectureManagement = () => {
             );
 
             alert("✅ " + res.data.message);
-            fetchTeacherLectures();
+            fetchTeacherActiveLectures();
             
             // Also refresh the TeacherAttendanceOptions component
             window.dispatchEvent(new CustomEvent('lectureEnded', { 
@@ -234,48 +218,46 @@ const LectureManagement = () => {
                 </select>
             </div>
             
-            {/* Start New Lecture - Only show if no active lectures for SELECTED class */}
-            {activeLectures.length === 0 && (
-                <div style={{ 
-                    marginBottom: "30px", 
-                    padding: "20px", 
-                    backgroundColor: "#1e293b", 
-                    borderRadius: "8px" 
-                }}>
-                    <h3>Start New Lecture</h3>
-                    <div style={{ marginBottom: "15px" }}>
-                        <input
-                            type="text"
-                            placeholder="Lecture Title"
-                            value={formData.title}
-                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                            style={{
-                                width: "100%",
-                                padding: "10px",
-                                borderRadius: "4px",
-                                border: "1px solid #475569",
-                                backgroundColor: "#0f172a",
-                                color: "white",
-                                fontSize: "16px"
-                            }}
-                        />
-                    </div>
-                    <button
-                        onClick={startLecture}
-                        disabled={loading || !formData.title.trim() || !formData.classId}
+            {/* Start New Lecture - Form is always visible, validation happens on click */}
+            <div style={{ 
+                marginBottom: "30px", 
+                padding: "20px", 
+                backgroundColor: "#1e293b", 
+                borderRadius: "8px" 
+            }}>
+                <h3>Start New Lecture</h3>
+                <div style={{ marginBottom: "15px" }}>
+                    <input
+                        type="text"
+                        placeholder="Lecture Title"
+                        value={formData.title}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                         style={{
-                            padding: "12px 24px",
-                            backgroundColor: (loading || !formData.classId) ? "#ccc" : "#22c55e",
-                            color: "white",
-                            border: "none",
+                            width: "100%",
+                            padding: "10px",
                             borderRadius: "4px",
-                            cursor: (loading || !formData.classId) ? "not-allowed" : "pointer"
+                            border: "1px solid #475569",
+                            backgroundColor: "#0f172a",
+                            color: "white",
+                            fontSize: "16px"
                         }}
-                    >
-                        {loading ? "Starting..." : "🚀 Start Lecture (50 min)"}
-                    </button>
+                    />
                 </div>
-            )}
+                <button
+                    onClick={startLecture}
+                    disabled={loading || !formData.title.trim() || !formData.classId}
+                    style={{
+                        padding: "12px 24px",
+                        backgroundColor: (loading || !formData.classId) ? "#ccc" : "#22c55e",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "4px",
+                        cursor: (loading || !formData.classId) ? "not-allowed" : "pointer"
+                    }}
+                >
+                    {loading ? "Starting..." : "🚀 Start Lecture (50 min)"}
+                </button>
+            </div>
 
             {/* Active Lectures for Selected Class */}
             {activeLectures.length > 0 && (
@@ -311,33 +293,6 @@ const LectureManagement = () => {
                             >
                                 🛑 End Lecture
                             </button>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {/* Lecture History */}
-            {lectures && lectures.length > 0 && (
-                <div style={{ 
-                    padding: "20px", 
-                    backgroundColor: "#1e293b", 
-                    borderRadius: "8px" 
-                }}>
-                    <h4>📚 Recent Lectures</h4>
-                    {lectures.slice(0, 5).map((lecture) => (
-                        <div key={lecture._id} style={{ 
-                            marginTop: "10px", 
-                            padding: "10px", 
-                            backgroundColor: "#334155", 
-                            borderRadius: "4px",
-                            textAlign: "left"
-                        }}>
-                            <strong>{lecture.title}</strong>
-                            <br />
-                            <small>
-                                Class: {lecture.classId} | 
-                                Started: {new Date(lecture.startTime).toLocaleString()}
-                            </small>
                         </div>
                     ))}
                 </div>

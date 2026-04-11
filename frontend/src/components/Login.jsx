@@ -26,6 +26,16 @@ const Login = ({ setIsLoggedIn, setIsRegistered }) => {
             if (res.data.user && res.data.user._id) {
               localStorage.setItem("userId", res.data.user._id);
               localStorage.setItem("userRole", res.data.user.role || "student"); 
+              
+              // Extract username from email if name is generic
+              let displayName = res.data.user.name || "User";
+              if (displayName.toLowerCase().includes("user") || displayName.toLowerCase().includes("teacher")) {
+                displayName = res.data.user.email.split("@")[0];
+                // Capitalize first letter
+                displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+              }
+              
+              localStorage.setItem("userName", displayName);
               setIsLoggedIn(true); 
             } else {
               alert("Login failed: Invalid user data");
