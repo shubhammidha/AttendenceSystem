@@ -5,6 +5,7 @@ const QRGenerator = () => {
     const [qrImage, setQrImage] = useState("");
     const [qrString, setQrString] = useState("");
     const [classId, setClassId] = useState("69c188592fda59eb47432e5c");
+    const [loading, setLoading] = useState(false);
 
     const generateQR = async () => {
         try{
@@ -12,7 +13,7 @@ const QRGenerator = () => {
                 alert("Please enter a class ID");
                 return;
             }
-
+            setLoading(true);
             const res = await axios.post("http://localhost:5000/api/qr/generate", {
                 classId: classId.trim()
             });
@@ -22,57 +23,43 @@ const QRGenerator = () => {
         } catch (error) {
             console.log("QR Generation Error:", error);
             alert("Failed to generate QR code");
-        } 
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
-        <div>
-            <h2>Generate QR</h2>
+        <div className="card">
+            <h2 style={{ fontSize: "1.5rem", marginBottom: "1rem" }}>Generate QR</h2>
             <input
                 type="text"
                 placeholder="Enter Class ID"
                 value={classId}
                 onChange={(e) => setClassId(e.target.value)}
-                style={{
-                    padding: "8px",
-                    marginRight: "10px",
-                    borderRadius: "4px",
-                    border: "1px solid #ccc"
-                }}
+                className="form-input"
             />
-            <button onClick={generateQR}>Generate QR</button>
+            <button onClick={generateQR} className="btn-primary" disabled={loading}>
+                {loading ? "Generating..." : "Generate QR"}
+            </button>
 
             {qrImage && (
-                <div style={{ marginTop: "20px" }}>
-                    <img src={qrImage} alt="QR Code" style={{ maxWidth: "200px" }}/>
-                    <div style={{ marginTop: "10px" }}>
-                        <h4>QR Data (Copy this):</h4>
+                <div style={{ marginTop: "1.5rem", textAlign: "center" }}>
+                    <img src={qrImage} alt="QR Code" style={{ maxWidth: "100%", height: "auto", borderRadius: "8px" }}/>
+                    <div style={{ marginTop: "1rem" }}>
+                        <h4 style={{ color: "#94a3b8" }}>QR Data (Copy this):</h4>
                         <textarea
                             value={qrString}
                             readOnly
-                            style={{
-                                width: "300px",
-                                height: "80px",
-                                padding: "8px",
-                                borderRadius: "4px",
-                                border: "1px solid #ccc",
-                                backgroundColor: "#f5f5f5"
-                            }}
+                            className="form-input"
+                            style={{ height: "80px", background: "#0f172a", color: "white" }}
                         />
                         <button 
                             onClick={() => {
                                 navigator.clipboard.writeText(qrString);
                                 alert("QR data copied to clipboard!");
                             }}
-                            style={{
-                                marginLeft: "10px",
-                                padding: "8px 15px",
-                                backgroundColor: "#22c55e",
-                                color: "white",
-                                border: "none",
-                                borderRadius: "4px",
-                                cursor: "pointer"
-                            }}
+                            className="btn-primary"
+                            style={{ marginTop: "0.5rem" }}
                         >
                             Copy
                         </button>

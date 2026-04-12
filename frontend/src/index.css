@@ -55,15 +55,96 @@ body {
 }
 
 #root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  background: #0f172a;
+}
+
+.page-wrapper {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  box-sizing: border-box;
+}
+
+/* Responsive Utilities */
+.card {
+  background: #1e293b;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem;
+  margin-top: 1rem;
+  border-radius: 0.5rem;
+  border: none;
+  box-sizing: border-box;
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 0.75rem;
+  margin-top: 1.5rem;
+  border-radius: 0.5rem;
+  border: none;
+  background: #22c55e;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+@media (min-width: 640px) {
+  .app-container {
+    padding: 0 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .app-container {
+    padding: 0 2rem;
+  }
+}
+
+.centered-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-grow: 1;
+}
+
+h1,
+h2 {
+  font-family: var(--heading);
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+h1 {
+  font-size: 2.5rem;
+  letter-spacing: -1.68px;
+  margin: 2rem 0;
+}
+
+h2 {
+  font-size: 1.5rem;
+  line-height: 118%;
+  letter-spacing: -0.24px;
+  margin: 0 0 0.5rem;
 }
 
 h1,

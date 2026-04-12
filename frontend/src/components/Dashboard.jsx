@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { PieChart, Pie, Tooltip, Legend, Cell } from "recharts";
+import { PieChart, Pie, Tooltip, Legend, Cell, ResponsiveContainer } from "recharts";
 import LectureManagement from "./LectureManagement";
 import TeacherAttendanceOptions from "./TeacherAttendanceOptions";
 import StudentAttendance from "./StudentAttendance";
 import LectureHistory from "./LectureHistory";
+import Layout from "./Layout";
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -20,7 +21,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchStats();
-    
+
     const savedRole = localStorage.getItem("userRole");
     if (savedRole) {
       setUserRole(savedRole);
@@ -57,7 +58,7 @@ const Dashboard = () => {
           }
         }
       );
-      
+
       setStats(res.data);
     } catch (error) {
       console.error("Error fetching stats:", error);
@@ -74,132 +75,94 @@ const Dashboard = () => {
     localStorage.removeItem("userId");
     localStorage.removeItem("userRole");
     localStorage.removeItem("userName");
-    window.location.reload(); // Force reload to clear state
+    window.location.reload(); 
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#0f172a",
-        color: "white",
-        padding: "30px"
-      }}
-    >
-      {/* Header with Logout */}
-      <div style={{ 
-        display: "flex", 
-        justifyContent: "space-between", 
-        alignItems: "center",
-        marginBottom: "20px"
-      }}>
-        <div>
-          <h1 style={{ textAlign: "left", fontSize: "40px", margin: 0 }}>
-            Welcome, {userName}
-          </h1>
-          <p style={{ color: "#94a3b8", margin: "5px 0 0 0" }}>
-            {userRole === "teacher" ? "👨‍🏫 Teacher" : "👨‍🎓 Student"} Portal
-          </p>
+    <Layout>
+      <div style={{ color: "white", padding: "2rem 0" }}>
+        <div style={{ 
+          display: "flex", 
+          flexDirection: window.innerWidth < 640 ? "column" : "row",
+          justifyContent: "space-between", 
+          alignItems: window.innerWidth < 640 ? "flex-start" : "center",
+          marginBottom: "2rem",
+          gap: "1rem"
+        }}>
+          <div>
+            <h1 style={{ textAlign: "left", fontSize: "2rem", margin: 0 }}>
+              Welcome, {userName}
+            </h1>
+            <p style={{ color: "#94a3b8", margin: "5px 0 0 0" }}>
+              {userRole === "teacher" ? "👨‍🏫 Teacher" : "👨‍🎓 Student"} Portal
+            </p>
+          </div>
+          <button
+            onClick={handleLogout}
+            style={{
+              padding: "0.5rem 1rem",
+              backgroundColor: "#ef4444",
+              color: "white",
+              border: "none",
+              borderRadius: "0.375rem",
+              fontSize: "0.875rem",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem"
+            }}
+          >
+            🚪 Logout
+          </button>
         </div>
-        <button
-          onClick={handleLogout}
-          style={{
-            padding: "10px 20px",
-            backgroundColor: "#ef4444",
-            color: "white",
-            border: "none",
-            borderRadius: "6px",
-            fontSize: "14px",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px"
-          }}
-        >
-          🚪 Logout
-        </button>
+
+        {userRole === "teacher" && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <LectureManagement />
+            <TeacherAttendanceOptions />
+            <LectureHistory />
+          </div>
+        )}
+
+        {userRole === "student" && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", marginTop: "2rem" }}>
+            {[
+                { title: "Total Classes", value: stats.totalClasses },
+                { title: "Present", value: stats.present },
+                { title: "Absent", value: stats.absent },
+                { title: "Attendance %", value: `${stats.percentage}%` }
+            ].map((stat, i) => (
+                <div key={i} className="card" style={{ textAlign: "center" }}>
+                    <h2>{stat.title}</h2>
+                    <p style={{ fontSize: "1.25rem", fontWeight: "bold" }}>{stat.value}</p>
+                </div>
+            ))}
+          </div>
+        )}
+
+        {userRole === "student" && (
+          <div style={{ marginTop: "3rem", height: "300px" }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={data} dataKey="value" outerRadius={80} label>
+                  <Cell fill="#22c55e" />
+                  <Cell fill="#ef4444" />
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {userRole === "student" && (
+          <div style={{ marginTop: "2.5rem" }}>
+            <StudentAttendance />
+          </div>
+        )}
       </div>
-
-      {/* Teacher-specific features */}
-      {userRole === "teacher" && (
-        <>
-          <LectureManagement />
-          <TeacherAttendanceOptions />
-          <LectureHistory />
-        </>
-      )}
-
-      {/* Stats Cards - Only for students */}
-      {userRole === "student" && (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            gap: "20px",
-            marginTop: "30px",
-            flexWrap: "wrap"
-          }}
-        >
-          <div style={cardStyle}>
-            <h2>Total Classes</h2>
-            <p>{stats.totalClasses}</p>
-          </div>
-
-          <div style={cardStyle}>
-            <h2>Present</h2>
-            <p>{stats.present}</p>
-          </div>
-
-          <div style={cardStyle}>
-            <h2>Absent</h2>
-            <p>{stats.absent}</p>
-          </div>
-
-          <div style={cardStyle}>
-            <h2>Attendance %</h2>
-            <p>{stats.percentage}%</p>
-          </div>
-        </div>
-      )}
-
-      {/* Pie Chart - Only for students */}
-      {userRole === "student" && (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            marginTop: "50px"
-          }}
-        >
-          <PieChart width={450} height={400}>
-            <Pie data={data} dataKey="value" outerRadius={130} label>
-              <Cell fill="#22c55e" />
-              <Cell fill="#ef4444" />
-            </Pie>
-            <Tooltip />
-            <Legend />
-          </PieChart>
-        </div>
-      )}
-
-      {/* Student-only features */}
-      {userRole === "student" && (
-        <StudentAttendance />
-      )}
-
-      {/* Teacher-only features would go here */}
-    </div>
+    </Layout>
   );
 };
-
-const cardStyle = {
-  background: "#1e293b",
-  padding: "20px",
-  borderRadius: "12px",
-  width: "220px",
-  textAlign: "center",
-  boxShadow: "0 4px 10px rgba(0,0,0,0.3)"
-};
-
 
 export default Dashboard;

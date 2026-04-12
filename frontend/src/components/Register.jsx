@@ -1,5 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
+import Layout from "./Layout";
 
 const Register = ({ setIsRegistered }) => {
     const [form, setForm] = useState({
@@ -31,24 +32,9 @@ const Register = ({ setIsRegistered }) => {
     };
 
     return (
-        <div
-          style={{
-            minHeight: "100vh",
-            background: "#0f172a",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center"
-          }}
-        >
-          <div
-            style={{
-              background: "#1e293b",
-              padding: "40px",
-              borderRadius: "12px",
-              width: "350px"
-            }}
-          >
-            <h1 style={{ color: "white", textAlign: "center", marginBottom: "20px" }}>
+        <Layout centered={true}>
+          <div className="card" style={{ maxWidth: "350px" }}>
+            <h1 style={{ color: "white", textAlign: "center", marginBottom: "1.5rem", fontSize: "2rem" }}>
               Create Account
             </h1>
 
@@ -57,7 +43,7 @@ const Register = ({ setIsRegistered }) => {
               name="name"
               placeholder="Enter name"
               onChange={handleChange}
-              style={inputStyle}
+              className="form-input"
             />
 
             <input
@@ -65,7 +51,7 @@ const Register = ({ setIsRegistered }) => {
               name="email"
               placeholder="Enter email"
               onChange={handleChange}
-              style={inputStyle}
+              className="form-input"
             />
 
             <input
@@ -73,28 +59,21 @@ const Register = ({ setIsRegistered }) => {
               name="password"
               placeholder="Enter password"
               onChange={handleChange}
-              style={inputStyle}
+              className="form-input"
             />
 
             <select
               name="role"
               onChange={handleChange}
               value={form.role}
-              style={{
-                width: "100%",
-                padding: "12px",
-                marginTop: "20px",
-                borderRadius: "8px",
-                border: "none",
-                background: "#334155",
-                color: "white"
-              }}
+              className="form-input"
+              style={{ background: "#334155", color: "white" }}
             >
               <option value="student">Student</option>
               <option value="teacher">Teacher</option>
             </select>
 
-            <button onClick={handleRegister} style={buttonStyle}>
+            <button onClick={handleRegister} className="btn-primary">
               Register
             </button>
 
@@ -102,7 +81,7 @@ const Register = ({ setIsRegistered }) => {
               style={{ 
                 color: "#94a3b8", 
                 textAlign: "center", 
-                marginTop: "20px", 
+                marginTop: "1.5rem", 
                 cursor: "pointer" 
               }}
               onClick={() => setIsRegistered(true)}
@@ -110,28 +89,8 @@ const Register = ({ setIsRegistered }) => {
               Already have an account? Login
             </p>
           </div>
-        </div>
+        </Layout>
     );
-};
-
-const inputStyle = {
-  width: "100%",
-  padding: "12px",
-  marginTop: "20px",
-  borderRadius: "8px",
-  border: "none"
-};
-
-const buttonStyle = {
-  width: "100%",
-  padding: "12px",
-  marginTop: "20px",
-  borderRadius: "8px",
-  border: "none",
-  background: "#22c55e",
-  color: "white",
-  fontSize: "16px",
-  cursor: "pointer"
 };
 
 export default Register;

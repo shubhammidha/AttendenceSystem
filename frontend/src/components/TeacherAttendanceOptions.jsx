@@ -1,16 +1,3 @@
-/**
- * Teacher Attendance Options Component
- * 
- * Purpose: Teacher interface for choosing attendance methods after starting lecture
- * 
- * Features:
- * - Display active lecture information
- * - Three attendance methods: Manual, QR, Face Recognition
- * - Generate QR codes for active lectures
- * - View attendance list for current lecture
- * - Real-time attendance tracking
- */
-
 import { useState, useEffect } from "react";
 import axios from "axios";
 
@@ -171,31 +158,24 @@ const TeacherAttendanceOptions = () => {
 
     const AttendanceMethodCard = ({ method, icon, title, onClick, disabled, isSelected }) => (
         <div 
+            className="card"
             style={{
-                padding: "20px",
                 backgroundColor: isSelected ? "#065f46" : "#1e293b",
-                borderRadius: "8px",
                 textAlign: "center",
                 cursor: disabled ? "not-allowed" : "pointer",
                 opacity: disabled ? 0.5 : 1,
-                border: isSelected ? "2px solid #22c55e" : "none",
-                transition: "all 0.3s ease"
+                border: isSelected ? "2px solid #22c55e" : "1px solid #334155"
             }}
             onClick={disabled ? null : onClick}
         >
-            <div style={{ fontSize: "40px", marginBottom: "10px" }}>{icon}</div>
-            <h3 style={{ margin: "0 0 10px 0" }}>{title}</h3>
+            <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>{icon}</div>
+            <h3 style={{ margin: "0" }}>{title}</h3>
         </div>
     );
 
     if (activeLectures.length === 0) {
         return (
-            <div style={{ 
-                textAlign: "center", 
-                padding: "40px", 
-                backgroundColor: "#1e293b", 
-                borderRadius: "8px" 
-            }}>
+            <div className="card" style={{ textAlign: "center" }}>
                 <h3>📚 No Active Lectures</h3>
                 <p style={{ color: "#94a3b8" }}>
                     Start a lecture to enable attendance options
@@ -205,7 +185,7 @@ const TeacherAttendanceOptions = () => {
     }
 
     return (
-        <div style={{ padding: "20px", backgroundColor: "#1e293b", borderRadius: "8px" }}>
+        <div className="card">
             <h3>📋 Attendance Options</h3>
             
             {activeLectures.map((lecture) => {
@@ -213,85 +193,40 @@ const TeacherAttendanceOptions = () => {
                 const currentMethod = lecture.attendanceMethod || "none";
                 
                 return (
-                    <div key={lectureId} style={{ 
-                        marginBottom: "40px", 
-                        padding: "20px", 
-                        backgroundColor: "#1e293b", 
-                        borderRadius: "12px",
-                        border: "1px solid #334155"
-                    }}>
+                    <div key={lectureId} style={{ marginTop: "1.5rem" }}>
                         <div style={{ 
-                            marginBottom: "20px", 
-                            padding: "15px", 
+                            marginBottom: "1rem", 
+                            padding: "1rem", 
                             backgroundColor: "#065f46", 
                             borderRadius: "8px" 
                         }}>
-                            <h4>🟢 Active Lecture: {lecture.title}</h4>
-                            <p>Class: {lecture.classId}</p>
-                            <p>📱 Attendance method: {currentMethod === "none" ? "Not selected" : currentMethod.toUpperCase()}</p>
+                            <h4>🟢 Active: {lecture.title}</h4>
+                            <p style={{ fontSize: "0.875rem" }}>Attendance method: {currentMethod.toUpperCase()}</p>
                         </div>
 
-                        {/* Method Selection for this specific lecture */}
                         {(currentMethod === "" || currentMethod === "none") && (
-                            <div style={{ 
-                                display: "grid", 
-                                gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", 
-                                gap: "15px", 
-                                marginBottom: "20px" 
-                            }}>
-                                <AttendanceMethodCard
-                                    method="manual"
-                                    icon="✍️"
-                                    title="Manual"
-                                    onClick={() => selectAttendanceMethod(lectureId, "manual")}
-                                />
-                                <AttendanceMethodCard
-                                    method="qr"
-                                    icon="📱"
-                                    title="QR Code"
-                                    onClick={() => selectAttendanceMethod(lectureId, "qr")}
-                                    disabled={loading}
-                                />
-                                <AttendanceMethodCard
-                                    method="face"
-                                    icon="👤"
-                                    title="Face"
-                                    onClick={() => selectAttendanceMethod(lectureId, "face")}
-                                />
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "1rem" }}>
+                                <AttendanceMethodCard method="manual" icon="✍️" title="Manual" onClick={() => selectAttendanceMethod(lectureId, "manual")} />
+                                <AttendanceMethodCard method="qr" icon="📱" title="QR Code" onClick={() => selectAttendanceMethod(lectureId, "qr")} disabled={loading} />
+                                <AttendanceMethodCard method="face" icon="👤" title="Face" onClick={() => selectAttendanceMethod(lectureId, "face")} />
                             </div>
                         )}
 
-                        {/* Interface for selected method */}
                         {currentMethod === "manual" && (
-                            <div style={{ marginTop: "20px" }}>
-                                <h5>✍️ Manual Attendance Marking</h5>
-                                <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "10px" }}>
+                            <div style={{ overflowX: "auto" }}>
+                                <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "1rem" }}>
                                     <thead>
                                         <tr style={{ backgroundColor: "#334155" }}>
-                                            <th style={{ padding: "8px", textAlign: "left" }}>Student</th>
-                                            <th style={{ padding: "8px", textAlign: "center" }}>Status</th>
-                                            <th style={{ padding: "8px", textAlign: "center" }}>Action</th>
+                                            <th style={{ padding: "0.5rem", textAlign: "left" }}>Student</th>
+                                            <th style={{ padding: "0.5rem", textAlign: "center" }}>Status</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {students.map(student => (
                                             <tr key={student._id} style={{ borderBottom: "1px solid #334155" }}>
-                                                <td style={{ padding: "8px" }}>{student.name}</td>
-                                                <td style={{ padding: "8px", textAlign: "center" }}>
-                                                    <span style={{ 
-                                                        padding: "2px 6px", 
-                                                        borderRadius: "4px",
-                                                        fontSize: "12px",
-                                                        backgroundColor: attendanceMap[student._id] === "present" ? "#166534" : "#991b1b"
-                                                    }}>
-                                                        {attendanceMap[student._id] || "absent"}
-                                                    </span>
-                                                </td>
-                                                <td style={{ padding: "8px", textAlign: "center" }}>
-                                                    <button 
-                                                        onClick={() => toggleAttendance(student._id, attendanceMap[student._id] || "absent", lectureId, lecture.classId)}
-                                                        style={{ padding: "4px 8px", backgroundColor: "#2563eb", color: "white", border: "none", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}
-                                                    >Toggle</button>
+                                                <td style={{ padding: "0.5rem" }}>{student.name}</td>
+                                                <td style={{ padding: "0.5rem", textAlign: "center" }}>
+                                                    <button onClick={() => toggleAttendance(student._id, attendanceMap[student._id] || "absent", lectureId, lecture.classId)}>Toggle</button>
                                                 </td>
                                             </tr>
                                         ))}
@@ -301,16 +236,23 @@ const TeacherAttendanceOptions = () => {
                         )}
 
                         {currentMethod === "qr" && qrData && (
-                            <div style={{ textAlign: "center", marginTop: "20px" }}>
+                            <div style={{ textAlign: "center", marginTop: "1rem" }}>
                                 <h5>📱 Scan QR Code</h5>
-                                <img src={qrData} alt="QR Code" style={{ maxWidth: "150px", margin: "10px auto", border: "4px solid white", borderRadius: "8px" }} />
-                            </div>
-                        )}
-
-                        {currentMethod === "face" && (
-                            <div style={{ textAlign: "center", marginTop: "20px", padding: "15px", backgroundColor: "#0f172a", borderRadius: "8px" }}>
-                                <h5>👤 Face Recognition Active</h5>
-                                <p style={{ color: "#94a3b8" }}>Students can now mark attendance using their registered face.</p>
+                                <img src={qrData} alt="QR Code" style={{ maxWidth: "100%", height: "auto", border: "4px solid white", borderRadius: "8px" }} />
+                                <br />
+                                <button className="btn-primary" onClick={async () => {
+                                    try {
+                                        const token = localStorage.getItem("token");
+                                        await axios.put(`http://localhost:5000/api/lecture/end/${lectureId}`, {}, {
+                                            headers: { Authorization: `Bearer ${token}` }
+                                        });
+                                        alert("Lecture ended");
+                                        fetchActiveLectures();
+                                        window.dispatchEvent(new CustomEvent('lectureEnded'));
+                                    } catch (error) {
+                                        alert("Failed: " + error.message);
+                                    }
+                                }}>🛑 End Lecture</button>
                             </div>
                         )}
                     </div>

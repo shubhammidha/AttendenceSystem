@@ -1,5 +1,6 @@
 import {useState} from "react";
 import axios from "axios";
+import Layout from "./Layout";
 
 const Login = ({ setIsLoggedIn, setIsRegistered }) => {
     const [form, setForm] = useState({
@@ -26,15 +27,13 @@ const Login = ({ setIsLoggedIn, setIsRegistered }) => {
             if (res.data.user && res.data.user._id) {
               localStorage.setItem("userId", res.data.user._id);
               localStorage.setItem("userRole", res.data.user.role || "student"); 
-              
-              // Extract username from email if name is generic
+
               let displayName = res.data.user.name || "User";
               if (displayName.toLowerCase().includes("user") || displayName.toLowerCase().includes("teacher")) {
                 displayName = res.data.user.email.split("@")[0];
-                // Capitalize first letter
                 displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
               }
-              
+
               localStorage.setItem("userName", displayName);
               setIsLoggedIn(true); 
             } else {
@@ -47,31 +46,16 @@ const Login = ({ setIsLoggedIn, setIsRegistered }) => {
     };
 
     return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#0f172a",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center"
-      }}
-    >
-      <div
-        style={{
-          background: "#1e293b",
-          padding: "40px",
-          borderRadius: "12px",
-          width: "350px"
-        }}
-      >
-        <h1 style={{ color: "white", textAlign: "center" }}>Login</h1>
+    <Layout centered={true}>
+      <div className="card" style={{ maxWidth: "350px" }}>
+        <h1 style={{ color: "white", textAlign: "center", fontSize: "2rem" }}>Login</h1>
 
         <input
           type="email"
           name="email"
           placeholder="Enter email"
           onChange={handleChange}
-          style={inputStyle}
+          className="form-input"
         />
 
         <input
@@ -79,10 +63,10 @@ const Login = ({ setIsLoggedIn, setIsRegistered }) => {
           name="password"
           placeholder="Enter password"
           onChange={handleChange}
-          style={inputStyle}
+          className="form-input"
         />
 
-        <button onClick={handleLogin} style={buttonStyle}>
+        <button onClick={handleLogin} className="btn-primary">
           Login
         </button>
 
@@ -90,7 +74,7 @@ const Login = ({ setIsLoggedIn, setIsRegistered }) => {
           style={{ 
             color: "#94a3b8", 
             textAlign: "center", 
-            marginTop: "20px", 
+            marginTop: "1.5rem", 
             cursor: "pointer" 
           }}
           onClick={() => setIsRegistered(false)}
@@ -98,28 +82,8 @@ const Login = ({ setIsLoggedIn, setIsRegistered }) => {
           Don't have an account? Register
         </p>
       </div>
-    </div>
+    </Layout>
   );
-};
-
-const inputStyle = {
-  width: "100%",
-  padding: "12px",
-  marginTop: "20px",
-  borderRadius: "8px",
-  border: "none"
-};
-
-const buttonStyle = {
-  width: "100%",
-  padding: "12px",
-  marginTop: "20px",
-  borderRadius: "8px",
-  border: "none",
-  background: "#22c55e",
-  color: "white",
-  fontSize: "16px",
-  cursor: "pointer"
 };
 
 export default Login;
